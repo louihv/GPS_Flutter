@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "433015377389",
+    "firebase_url": "https://bayanihan-flutter-default-rtdb.firebaseio.com",
+    "project_id": "bayanihan-flutter",
+    "storage_bucket": "bayanihan-flutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:433015377389:android:bec20c2e15bc7524cb2be4",
+        "android_client_info": {
+          "package_name": "com.bayanihanflutter.appname"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIB1RFup_TA1S8DlshrPZJdgQym0V5j0c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:433015377389:android:0c1b119d058c89bccb2be4",
+        "android_client_info": {
+          "package_name": "com.example.flutter_application"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIB1RFup_TA1S8DlshrPZJdgQym0V5j0c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
