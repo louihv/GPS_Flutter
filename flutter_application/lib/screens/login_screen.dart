@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/foundation.dart';  // For debugPrint
+import 'package:flutter/foundation.dart'; 
 import 'package:flutter_application/providers/auth_provider.dart' as myAuth;
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -55,28 +55,50 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;  // No error
   }
 
-  Future<Map<String, dynamic>?> _checkEmailExists(String email) async {
-    try {
-      final emailLower = email.toLowerCase();
-      final emailRef = _database.child('users/emailIndex/$emailLower');
-      final snapshot = await emailRef.get();
-      if (snapshot.exists && snapshot.value != null) {
-        final uid = snapshot.value.toString();  // Safer cast
-        final userRef = _database.child('users/$uid');
-        final userSnapshot = await userRef.get();
-        if (userSnapshot.exists && userSnapshot.value != null) {
-          return {
-            'uid': uid,
-            'userData': Map<String, dynamic>.from(userSnapshot.value as Map),
-          };
-        }
+Future<Map<String, dynamic>?> _checkEmailExists(String email) async {
+  try {
+    final emailLower = email.toLowerCase();
+    debugPrint('Querying DB for email: $emailLower');
+    final snapshot = await _database
+        .child('users')
+        .orderByChild('email')
+        .equalTo(emailLower)
+        .get();
+
+    debugPrint('Snapshot exists: ${snapshot.exists}, value: ${snapshot.value}');  
+
+    if (snapshot.exists && snapshot.value != null) {
+      final value = snapshot.value as Map<dynamic, dynamic>;
+      debugPrint('Value type: ${value.runtimeType}, entries: ${value.length}'); 
+      if (value.isNotEmpty) {
+        final userEntry = value.entries.first;
+        final uid = userEntry.key.toString();
+        final userDataRaw = userEntry.value as Map<dynamic, dynamic>;
+        final userData = <String, dynamic>{
+          'uid': uid,
+          'email': userDataRaw['email'] ?? '',
+          'role': userDataRaw['role'] ?? '',
+          'emailVerified': userDataRaw['emailVerified'] ?? false,
+          'isFirstLogin': userDataRaw['isFirstLogin'] ?? true,
+          'lastVerificationEmailSent': userDataRaw['lastVerificationEmailSent'] ?? 0,
+          ...Map<String, dynamic>.from(userDataRaw),
+        };
+        debugPrint('Found user: UID=$uid, Role=${userData['role']}, EmailVerified=${userData['emailVerified']}');
+        return {'uid': uid, 'userData': userData};
+      } else {
+        debugPrint('Value is empty map');
       }
-      return null;
-    } catch (e) {
-      debugPrint('Error checking email: $e');
-      return null;
+    } else {
+      debugPrint('Snapshot value is null or doesn\'t exist');
     }
+
+    debugPrint('No user found for email: $emailLower');
+    return null;
+  } catch (error) {
+    debugPrint('Error checking email: $error');
+    return null;
   }
+}
 
 Future<void> _handleLogin(BuildContext context) async {
   final email = _emailController.text.trim();
@@ -99,7 +121,6 @@ Future<void> _handleLogin(BuildContext context) async {
   setState(() => _isLoading = true);
 
   try {
-    // Fixed: Skip setPersistence on mobile (only web-supported)
     if (kIsWeb) {
       await _auth.setPersistence(Persistence.LOCAL);
     }
@@ -178,7 +199,7 @@ Future<void> _handleLogin(BuildContext context) async {
     Fluttertoast.showToast(msg: 'Login successful.');
     // Navigate to home
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/dashboard');
     }
   } on FirebaseAuthException catch (authError) {
     debugPrint('Auth error: ${authError.code} - ${authError.message}');
@@ -196,6 +217,7 @@ Future<void> _handleLogin(BuildContext context) async {
     if (mounted) setState(() => _isLoading = false);
   }
 }
+
 
   void _navigateToLogin(BuildContext context) {
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
@@ -231,7 +253,7 @@ Future<void> _handleLogin(BuildContext context) async {
                 // Title
                 const Text(
                   'Login',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: ThemeConstants.accent), 
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: ThemeConstants.accent), 
                 ),
                 const SizedBox(height: 40),
                 // Email Field
