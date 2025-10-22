@@ -32,6 +32,11 @@ class CustomBottomNavBar extends StatelessWidget {
       activeIcon: Icon(Icons.person),
       label: 'Profile',
     ),
+    const BottomNavigationBarItem(
+      icon: Icon(Icons.add_location_alt_outlined),
+      activeIcon: Icon(Icons.add_location_alt),
+      label: 'Org Request', // ✅ updated label
+    ),
   ];
 
   @override
