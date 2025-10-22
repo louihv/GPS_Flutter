@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class AuthProvider extends ChangeNotifier {
   User? _user;
-  Map<String, dynamic>? _userData;  // Extra user data from DB
+  Map<String, dynamic>? _userData; 
 
   User? get user => _user;
   Map<String, dynamic>? get userData => _userData;

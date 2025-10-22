@@ -3,6 +3,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart'; 
 import 'package:flutter_application/providers/auth_provider.dart' as myAuth;
 import 'package:flutter/material.dart';
+import 'package:flutter_application/screens/nav_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import '../constants/theme.dart';
@@ -199,8 +200,11 @@ Future<void> _handleLogin(BuildContext context) async {
     Fluttertoast.showToast(msg: 'Login successful.');
     // Navigate to home
     if (mounted) {
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    }
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const NavScreen()),
+      );   
+       }
   } on FirebaseAuthException catch (authError) {
     debugPrint('Auth error: ${authError.code} - ${authError.message}');
     if (authError.code == 'wrong-password' || authError.code == 'invalid-credential') {

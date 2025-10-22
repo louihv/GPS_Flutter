@@ -13,6 +13,8 @@ import 'screens/onboarding_screen.dart';
 import 'screens/recovery_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/nav_screen.dart';
+import 'screens/communityboard_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,10 +33,13 @@ class AuthWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    print('AuthProvider user: ${authProvider.user}'); 
     if (authProvider.user == null) {
+      print('Navigating to LoginScreen');
       return const LoginScreen();
     }
-    return const NavScreen(); // Bottom nav after login
+    print('Navigating to NavScreen');
+    return const NavScreen();
   }
 }
 
@@ -54,7 +59,7 @@ class MyApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: ThemeConstants.primary,
             foregroundColor: ThemeConstants.white,
-            shadowColor: ThemeConstants.buttonHover.withOpacity(0.1), // FIXED: .withOpacity
+            shadowColor: ThemeConstants.buttonHover.withOpacity(0.1), 
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
@@ -68,7 +73,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const AuthWrapper(), // FIXED: Use widget, not string
+      home: const AuthWrapper(),
       routes: {
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
@@ -76,7 +81,9 @@ class MyApp extends StatelessWidget {
         '/dashboard': (context) => const DashboardScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/recovery': (context) => const RecoveryScreen(),
-        '/profile': (context) => const ProfileScreen(), // FIXED: Consistent naming
+        '/profile': (context) => const ProfileScreen(), 
+        '/communityboard_screen': (context) => const CommunityBoardScreen(),
+
       },
     );
   }

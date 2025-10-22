@@ -11,7 +11,6 @@ class CustomBottomNavBar extends StatelessWidget {
     required this.onTap,
   });
 
-  // FIXED: Removed 'const' from _items
   static final List<BottomNavigationBarItem> _items = [
     const BottomNavigationBarItem(
       icon: Icon(Icons.home_outlined),
@@ -19,9 +18,14 @@ class CustomBottomNavBar extends StatelessWidget {
       label: 'Home',
     ),
     const BottomNavigationBarItem(
-      icon: Icon(Icons.bar_chart_outlined), 
-      activeIcon: Icon(Icons.bar_chart),
+      icon: Icon(Icons.dashboard),
+      activeIcon: Icon(Icons.dashboard),
       label: 'Dashboard',
+    ),
+    const BottomNavigationBarItem(
+      icon: Icon(Icons.person_outline),
+      activeIcon: Icon(Icons.person),
+      label: 'Community Board',
     ),
     const BottomNavigationBarItem(
       icon: Icon(Icons.person_outline),
@@ -38,7 +42,7 @@ class CustomBottomNavBar extends StatelessWidget {
       type: BottomNavigationBarType.fixed,
       selectedItemColor: ThemeConstants.primary,
       unselectedItemColor: Colors.grey[600],
-      backgroundColor: Colors.white, // Or ThemeConstants.lightBg
+      backgroundColor: Colors.white,
       elevation: 8,
       selectedFontSize: 12,
       unselectedFontSize: 12,

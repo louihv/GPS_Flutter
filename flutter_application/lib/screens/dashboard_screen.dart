@@ -36,6 +36,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
   late AnimationController _scaleController;
   late Animation<double> _fadeAnim;
   late Animation<double> _scaleAnim;
+  int _selectedIndex = 0; 
+
 
   @override
   void initState() {
@@ -60,12 +62,11 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     _scaleController.forward();
   }
 
-  // NEW: Safe parsing helper for Firebase string/num values
   double parseDouble(dynamic value) {
     if (value == null) return 0.0;
     if (value is num) return value.toDouble();
     if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;  // Fallback for unexpected types
+    return 0.0;
   }
 
   Future<void> _checkModalStatus() async {
@@ -77,7 +78,23 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
           _modalVisible = true;
           _hasShownModal = true;
         });
+        _showLocationModal();
       }
+    }
+  }
+
+    void _onNavBarTapped(int index) {
+    setState(() => _selectedIndex = index);
+    switch (index) {
+      case 0:
+        Navigator.pushReplacementNamed(context, '/home');
+        break;
+      case 1:
+        Navigator.pushReplacementNamed(context, '/dashboard');
+        break;
+      case 2:
+        Navigator.pushReplacementNamed(context, '/profile');
+        break;
     }
   }
 
@@ -92,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final userId = user.uid;  // Ensure string for comparison
+    final userId = user.uid;
     final role = authProvider.userData?['role'] ?? '';
     final orgName = authProvider.userData?['organization'] ?? '';
 
@@ -112,25 +129,17 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
               Container(
                 padding: DashboardStyles.headerPadding(),
                 height: DashboardStyles.headerHeight,
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.menu, size: 32, color: ThemeConstants.primary),
-                      onPressed: () => Scaffold.of(context).openDrawer(),
+                child: Center( // FIXED: Removed menu button, centered title
+                  child: Text(
+                    _headerTitle,
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: ThemeConstants.primary,
                     ),
-                    const Spacer(),
-                    Text(
-                      _headerTitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: ThemeConstants.primary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-              // Scrollable Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -163,7 +172,6 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                           for (var report in data.values) {
                             final r = report as Map<dynamic, dynamic>;
                             if (role == 'ABVN' && r['userUid'] != userId) continue;
-                            // FIXED: Use parseDouble to safely handle String/num/null
                             totalFoodPacks += parseDouble(r['NoOfFoodPacks']);
                             totalHotMeals += parseDouble(r['NoOfHotMeals']);
                             totalWaterLiters += parseDouble(r['LitersOfWater']);
@@ -204,14 +212,17 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
                               },
                             )).toList(),
                           );
+                          
                         },
                       ),
                     ],
                   ),
+                  
                 ),
               ),
             ],
           ),
+          
         ),
       ),
     );
@@ -297,8 +308,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
     SharedPreferences.getInstance().then((prefs) => prefs.setBool('hasShownLocationModal', true));
   }
 
-  // Location Modal (bottom sheet)
   void _showLocationModal() {
+    if (!_modalVisible) return; // Prevent multiple modals
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -344,6 +355,8 @@ class _DashboardScreenState extends State<DashboardScreen> with TickerProviderSt
             ),
           ],
         ),
+        
+        
       ),
     );
   }

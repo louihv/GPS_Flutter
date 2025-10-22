@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import 'home_screen.dart';  // Your converted HomeScreen (map)
-import 'dashboard_screen.dart';  // Your Dashboard
-import 'profile_screen.dart';  // Placeholder for Profile (create as needed)
+import '../screens/home_screen.dart';
+import '../screens/dashboard_screen.dart';
+import '../screens/profile_screen.dart';
+import '../screens/communityboard_screen.dart';
+
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key});
@@ -12,19 +14,19 @@ class NavScreen extends StatefulWidget {
 }
 
 class _NavScreenState extends State<NavScreen> {
-  int _currentIndex = 0;  // Start on Home
+  int _currentIndex = 0; 
 
-  // Your tab pages (add more as needed)
   final List<Widget> _pages = [
-    HomeScreen(),  // Tab 0: Map/Home
-    DashboardScreen(),  // Tab 1: Metrics
-    ProfileScreen(),  // Tab 2: Profile/Settings
+    const HomeScreen(),
+    const DashboardScreen(),
+    const CommunityBoardScreen(),
+    const ProfileScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(  // Preserves state (e.g., map doesn't reload)
+      body: IndexedStack(
         index: _currentIndex,
         children: _pages,
       ),

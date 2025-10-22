@@ -49,7 +49,7 @@ class DashboardStyles {
   // Gradient Container
   static BoxDecoration gradientContainer() => const BoxDecoration(
     gradient: LinearGradient(
-      colors: [Color(0xff6afa3b99), ThemeConstants.lightBg], 
+      colors: [Color.fromRGBO(255, 201, 229, 0.416), ThemeConstants.lightBg], 
       begin: Alignment.bottomCenter,
       end: Alignment.topCenter,
     ),
@@ -125,8 +125,8 @@ class DashboardStyles {
   static BoxDecoration modalContainer() => BoxDecoration(
     color: ThemeConstants.lightBg,
     borderRadius: const BorderRadius.only(
-      topLeft: Radius.circular(xlargeRadius),
-      topRight: Radius.circular(xlargeRadius),
+      topLeft: Radius.circular(10),
+      topRight: Radius.circular(10),
     ),
   );
 

@@ -8,6 +8,7 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
       body: const Center(child: Text('Profile Page - Add your content here')),
+      
     );
   }
 }
