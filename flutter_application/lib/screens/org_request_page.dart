@@ -159,7 +159,7 @@ class _OrgRequestPageState extends State<OrgRequestPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
-        title: const Text('Volunteer Request Form', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Volunteer Request Form', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: const Color(0xFF14AEBB),
         centerTitle: true,
       ),
@@ -179,13 +179,13 @@ class _OrgRequestPageState extends State<OrgRequestPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const Text(
-                        "Angat Buhay Volunteer Request",
+                        "Relief Operations Volunteer Request",
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF14AEBB)),
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFA3B99)),
                       ),
                       const SizedBox(height: 6),
                       const Text(
-                        "Mobilize help. Empower communities. Together, we rise.",
+                        "Angat Buhay Tayong Lahat! Join us in making a difference by requesting volunteers for your relief operations. Fill out the form below with the necessary details, and together, we can bring hope and assistance to those in need.",
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 13, color: Color(0xFF9E9E9E)),
                       ),

@@ -252,7 +252,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         title: const Text('Admin Dashboard',
         style: TextStyle(
         color: Colors.white, 
-        fontSize: 12, 
+        fontSize: 22, 
       ),
       ),
         backgroundColor: const Color(0xFF14AEBB),

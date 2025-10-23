@@ -156,7 +156,7 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildStatBox(Icons.flag, "Events", totalEvents, Colors.redAccent),
+          _buildStatBox(Icons.flag, "Events", totalEvents, const Color.fromARGB(255, 255, 255, 255)),
           _buildStatBox(Icons.people, "Volunteers", totalVolunteers, const Color.fromARGB(255, 255, 255, 255)),
         ],
       ),
@@ -189,8 +189,9 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
       appBar: AppBar(
         title: const Text('Volunteer Map Overview',style: TextStyle(
                   fontSize: 22,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.normal,
                   color: Colors.white)),
+                  centerTitle: true,
         backgroundColor: Color(0xFF14AEBB),
         actions: [
           IconButton(
@@ -244,9 +245,9 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => setState(() => showVolunteers = !showVolunteers),
-        label: Text(showVolunteers ? "Show Events" : "Show Volunteers"),
-        icon: Icon(showVolunteers ? Icons.flag : Icons.people_alt),
-        backgroundColor: Colors.teal,
+        label: Text(showVolunteers ? "Show Events" : "Show Volunteers", style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),),
+        icon: Icon(showVolunteers ? Icons.flag : Icons.people_alt, color: Color.fromARGB(255, 255, 255, 255),),
+        backgroundColor: Color(0xFF14AEBB),
       ),
     );
   }
