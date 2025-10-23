@@ -17,6 +17,7 @@ import 'screens/communityboard_screen.dart';
 
 import 'screens/org_request_page.dart';
 import 'screens/recommendations_page.dart';
+import 'screens/map_page.dart';
 
 
 
@@ -91,6 +92,8 @@ class MyApp extends StatelessWidget {
         '/communityboard_screen': (context) => const CommunityBoardScreen(),
         '/org_request': (context) => const OrgRequestPage(), // ✅ Added new route
         '/recommendations': (context) => const RecommendationsPage(),
+        '/map': (context) => const MapPage(),  // ✅ Add this line
+
 
 
       },

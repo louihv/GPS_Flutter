@@ -42,6 +42,12 @@ class CustomBottomNavBar extends StatelessWidget {
       activeIcon: Icon(Icons.recommend),
       label: 'Recommendations',
     ),
+    const BottomNavigationBarItem(
+      icon: Icon(Icons.map_outlined),
+      activeIcon: Icon(Icons.map),
+      label: 'Map',
+    ),
+
   ];
 
   @override

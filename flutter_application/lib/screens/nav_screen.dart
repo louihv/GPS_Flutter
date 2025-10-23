@@ -7,6 +7,8 @@ import '../screens/communityboard_screen.dart';
 
 import '../screens/org_request_page.dart'; // ✅ Import your new page
 import '../screens/recommendations_page.dart'; // ✅ New import
+import '../screens/map_page.dart'; // ✅ Add this
+
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key});
@@ -26,6 +28,7 @@ class _NavScreenState extends State<NavScreen> {
     const ProfileScreen(),
     const OrgRequestPage(), // ✅ New page
     const RecommendationsPage(),  // ✅ Added
+    const MapPage(), // ✅ Added
 
   ];
 
