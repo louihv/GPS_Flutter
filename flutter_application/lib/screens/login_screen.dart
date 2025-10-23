@@ -1,15 +1,15 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/foundation.dart'; 
-import 'package:flutter_application/providers/auth_provider.dart' as myAuth;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application/screens/nav_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
 import '../constants/theme.dart';
+import '../providers/auth_provider.dart' as myAuth;
+import 'nav_screen.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key}); 
+  const LoginScreen({super.key});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -21,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _auth = FirebaseAuth.instance;
   final _database = FirebaseDatabase.instance.ref();
+
   bool _isLoading = false;
   bool _showPassword = false;
   String? _emailError;
@@ -33,215 +34,131 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // Updated: Returns String? (error message or null) - no setState()
   String? _validateEmail(String? email) {
-    if (email == null || email.isEmpty) {
-      return 'Email is required.';
-    }
+    if (email == null || email.isEmpty) return 'Email is required.';
     final emailPattern = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
-    if (!emailPattern.hasMatch(email)) {
-      return 'Please enter a valid email address.';
-    }
-    return null;  // No error
+    if (!emailPattern.hasMatch(email)) return 'Please enter a valid email address.';
+    return null;
   }
 
-  // Updated: Returns String? (error message or null) - no setState()
   String? _validatePassword(String? password) {
-    if (password == null || password.isEmpty) {
-      return 'Password is required.';
-    }
-    if (password.length < 8) {
-      return 'Password must be at least 8 characters long.';
-    }
-    return null;  // No error
+    if (password == null || password.isEmpty) return 'Password is required.';
+    return null; // No length restriction
   }
 
-Future<Map<String, dynamic>?> _checkEmailExists(String email) async {
-  try {
-    final emailLower = email.toLowerCase();
-    debugPrint('Querying DB for email: $emailLower');
-    final snapshot = await _database
-        .child('users')
-        .orderByChild('email')
-        .equalTo(emailLower)
-        .get();
+  // Check if user exists in Realtime DB (users node)
+  Future<Map<String, dynamic>?> _getUserFromDB(String email) async {
+    try {
+      final snapshot = await _database
+          .child('users')
+          .orderByChild('email')
+          .equalTo(email.toLowerCase())
+          .get();
 
-    debugPrint('Snapshot exists: ${snapshot.exists}, value: ${snapshot.value}');  
+      if (snapshot.exists && snapshot.value != null) {
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        final entry = data.entries.first;
+        final uid = entry.key.toString();
+        final userData = entry.value as Map<dynamic, dynamic>;
 
-    if (snapshot.exists && snapshot.value != null) {
-      final value = snapshot.value as Map<dynamic, dynamic>;
-      debugPrint('Value type: ${value.runtimeType}, entries: ${value.length}'); 
-      if (value.isNotEmpty) {
-        final userEntry = value.entries.first;
-        final uid = userEntry.key.toString();
-        final userDataRaw = userEntry.value as Map<dynamic, dynamic>;
-        final userData = <String, dynamic>{
+        return {
           'uid': uid,
-          'email': userDataRaw['email'] ?? '',
-          'role': userDataRaw['role'] ?? '',
-          'emailVerified': userDataRaw['emailVerified'] ?? false,
-          'isFirstLogin': userDataRaw['isFirstLogin'] ?? true,
-          'lastVerificationEmailSent': userDataRaw['lastVerificationEmailSent'] ?? 0,
-          ...Map<String, dynamic>.from(userDataRaw),
+          'userData': Map<String, dynamic>.from(userData),
         };
-        debugPrint('Found user: UID=$uid, Role=${userData['role']}, EmailVerified=${userData['emailVerified']}');
-        return {'uid': uid, 'userData': userData};
-      } else {
-        debugPrint('Value is empty map');
       }
-    } else {
-      debugPrint('Snapshot value is null or doesn\'t exist');
+      return null;
+    } catch (e) {
+      debugPrint('DB check error: $e');
+      return null;
     }
-
-    debugPrint('No user found for email: $emailLower');
-    return null;
-  } catch (error) {
-    debugPrint('Error checking email: $error');
-    return null;
-  }
-}
-
-Future<void> _handleLogin(BuildContext context) async {
-  final email = _emailController.text.trim();
-  final password = _passwordController.text;
-
-  // Manual validation before proceeding (outside build)
-  final emailError = _validateEmail(email);
-  final passwordError = _validatePassword(password);
-  if (emailError != null) {
-    if (mounted) setState(() => _emailError = emailError);
-    return;
-  }
-  if (passwordError != null) {
-    if (mounted) setState(() => _passwordError = passwordError);
-    return;
   }
 
-  if (_isLoading) return;
+  Future<void> _handleLogin(BuildContext context) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
-  setState(() => _isLoading = true);
+    // Validate inputs
+    final emailError = _validateEmail(email);
+    final passwordError = _validatePassword(password);
 
-  try {
-    if (kIsWeb) {
-      await _auth.setPersistence(Persistence.LOCAL);
-    }
-
-    final userCredential = await _auth.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    final user = userCredential.user;
-
-    if (user == null) throw FirebaseAuthException(code: 'unknown');
-
-    final userInfo = await _checkEmailExists(email);
-    if (userInfo == null) {
-      Fluttertoast.showToast(msg: 'User account not fully set up. Please register again.');
-      await _auth.signOut();
-      _navigateToLogin(context);
+    if (emailError != null || passwordError != null) {
+      if (mounted) {
+        setState(() {
+          _emailError = emailError;
+          _passwordError = passwordError;
+        });
+      }
       return;
     }
 
-    final userData = userInfo['userData'] as Map<String, dynamic>?;
-    final isAdmin = userData?['role'] == 'AB ADMIN';
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
 
-    if (!isAdmin && !user.emailVerified) {
-      final lastVerificationSent = userData?['lastVerificationEmailSent'] ?? 0;
-      final oneHour = 60 * 60 * 1000;
-      final now = DateTime.now().millisecondsSinceEpoch;
-      if (now - lastVerificationSent < oneHour) {
-        Fluttertoast.showToast(msg: 'Verification email sent. Check inbox (and spam/junk).');
+    try {
+      if (kIsWeb) {
+        await _auth.setPersistence(Persistence.LOCAL);
+      }
+
+      // Step 1: Try Firebase Auth login
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      final user = userCredential.user;
+      if (user == null) {
+        throw FirebaseAuthException(code: 'unknown', message: 'Login failed');
+      }
+
+      // Step 2: Confirm user exists in Realtime DB
+      final dbUser = await _getUserFromDB(email);
+      if (dbUser == null) {
         await _auth.signOut();
-        _navigateToLogin(context);
+        Fluttertoast.showToast(msg: 'Account not fully registered. Please sign up again.');
         return;
       }
 
-      try {
-        final actionCodeSettings = ActionCodeSettings(
-          url: 'https://www.angat-bayanihan.com/pages/login.html',
-          handleCodeInApp: true,
+      final userData = dbUser['userData'] as Map<String, dynamic>;
+
+      // Optional: Update last login timestamp
+      await _database.child('users/${user.uid}/lastLogin').set(DateTime.now().millisecondsSinceEpoch);
+
+      // Success: Set global state and navigate
+      Provider.of<myAuth.AuthProvider>(context, listen: false).setUser(user, userData);
+
+      Fluttertoast.showToast(msg: 'Login successful!');
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const NavScreen()),
         );
-        await user.sendEmailVerification(actionCodeSettings);
-        await _database.child('users/${user.uid}/lastVerificationEmailSent').set(now);
-        Fluttertoast.showToast(msg: 'Verification email sent. Check inbox (spam/junk).');
-        await _auth.signOut();
-        _navigateToLogin(context);
-        return;
-      } catch (verificationError) {
-        debugPrint('Error sending verification: ${verificationError.toString()}');
-        if (verificationError is FirebaseAuthException &&
-            verificationError.code == 'too-many-requests') {
-          Fluttertoast.showToast(msg: 'Too many requests. Try again later.');
-        } else {
-          Fluttertoast.showToast(msg: 'Verification failed: ${verificationError.toString()}');
-        }
-        await _auth.signOut();
-        _navigateToLogin(context);
-        return;
       }
-    }
-
-    // Update DB if email verified but flag not set
-    if (user.emailVerified && !(userData?['emailVerified'] ?? false)) {
-      await _database.child('users/${user.uid}/emailVerified').set(true);
-      if (userData?['isFirstLogin'] == true) {
-        await _database.child('users/${user.uid}/isFirstLogin').set(false);
+    } on FirebaseAuthException catch (e) {
+      String msg = 'Login failed.';
+      if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        setState(() => _passwordError = 'Incorrect password');
+      } else if (e.code == 'user-not-found') {
+        setState(() => _emailError = 'Email not found');
+      } else {
+        msg = e.message ?? msg;
       }
-      Fluttertoast.showToast(msg: 'Email verified successfully!');
+      Fluttertoast.showToast(msg: msg);
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Login failed: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-
-    if (userData?['isFirstLogin'] == true) {
-      await _database.child('users/${user.uid}/isFirstLogin').set(false);
-    }
-
-    // Set global auth state
-    Provider.of<myAuth.AuthProvider>(context, listen: false).setUser(user, userData);
-
-    Fluttertoast.showToast(msg: 'Login successful.');
-    // Navigate to home
-    if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const NavScreen()),
-      );   
-       }
-  } on FirebaseAuthException catch (authError) {
-    debugPrint('Auth error: ${authError.code} - ${authError.message}');
-    if (authError.code == 'wrong-password' || authError.code == 'invalid-credential') {
-      if (mounted) setState(() => _passwordError = 'Password incorrect');
-    } else if (authError.code == 'user-not-found') {
-      if (mounted) setState(() => _emailError = 'Email not found.');
-    } else {
-      Fluttertoast.showToast(msg: 'Login failed: ${authError.message ?? authError.toString()}');
-    }
-  } catch (generalError) {
-    debugPrint('General login error: ${generalError.toString()}');
-    Fluttertoast.showToast(msg: 'Login failed: ${generalError.toString()}');
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
-  }
-}
-
-
-  void _navigateToLogin(BuildContext context) {
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
-  void _navigateToOnboarding(BuildContext context) {
-    Navigator.pushNamed(context, '/onboarding');
-  }
-
-  void _navigateToRecovery(BuildContext context) {
-    Navigator.pushNamed(context, '/recovery');
-  }
+  void _navigateToOnboarding() => Navigator.pushNamed(context, '/onboarding');
+  void _navigateToRecovery() => Navigator.pushNamed(context, '/recovery');
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: ThemeConstants.lightBg, 
+      backgroundColor: ThemeConstants.lightBg,
       body: SafeArea(
-        child: SingleChildScrollView( 
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Form(
             key: _formKey,
@@ -250,86 +167,92 @@ Future<void> _handleLogin(BuildContext context) async {
               children: [
                 // Back Button
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, size: 26, color: ThemeConstants.primary),  
-                  onPressed: () => _navigateToOnboarding(context),
+                  icon: const Icon(Icons.arrow_back, size: 26, color: ThemeConstants.primary),
+                  onPressed: _navigateToOnboarding,
                 ),
                 const SizedBox(height: 40),
+
                 // Title
                 const Text(
                   'Login',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: ThemeConstants.accent), 
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: ThemeConstants.accent),
                 ),
                 const SizedBox(height: 40),
+
                 // Email Field
-                const Text('Email:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color:ThemeConstants.primary)),
+                const Text('Email:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ThemeConstants.primary)),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   textCapitalization: TextCapitalization.none,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,  // Real-time validation
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  style: const TextStyle(fontSize: 12),
                   decoration: InputDecoration(
                     hintText: 'Enter Email',
-                    hintStyle: const TextStyle(color: ThemeConstants.placeholder),
-                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
-                    errorText: _emailError,  // Display manual errors (e.g., from auth)
-                    errorStyle: const TextStyle(color: Colors.red),
+                    hintStyle: const TextStyle(color: ThemeConstants.placeholder, fontSize: 12),
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                    enabledBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(15)),
+                      borderSide: BorderSide(color: ThemeConstants.placeholder, width: 1),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(15)),
+                      borderSide: BorderSide(color: ThemeConstants.primary, width: 1.5),
+                    ),
+                    errorText: _emailError,
+                    errorStyle: const TextStyle(color: Colors.red, fontSize: 11),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
-                  onChanged: (value) {
-                    if (_emailError != null) {
-                      setState(() => _emailError = null);  // Clear on typing
-                    }
-                  },
-                  onTap: () {
-                    if (_emailError != null) {
-                      setState(() => _emailError = null);  // Clear on tap
-                    }
-                  },
-                  validator: _validateEmail,  // Pure function - returns String? or null
+                  onChanged: (_) => setState(() => _emailError = null),
+                  validator: _validateEmail,
                 ),
-                if (_emailError != null) const SizedBox(height: 4),
-                // Password Field
+
                 const SizedBox(height: 24),
-                const Text('Password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color:ThemeConstants.primary)),
+
+                // Password Field
+                const Text('Password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ThemeConstants.primary)),
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: !_showPassword,
-                  autovalidateMode: AutovalidateMode.onUserInteraction,  // Real-time validation
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  style: const TextStyle(fontSize: 12),
                   decoration: InputDecoration(
                     hintText: 'Enter Password',
-                    hintStyle: const TextStyle(color: ThemeConstants.placeholder),
-                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
-                    suffixIcon: IconButton(
-                      icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility, color: ThemeConstants.primary,),
-                      onPressed: () => setState(() => _showPassword = !_showPassword),  // Safe post-build
+                    hintStyle: const TextStyle(color: ThemeConstants.placeholder, fontSize: 12),
+                    border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
+                    enabledBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(15)),
+                      borderSide: BorderSide(color: ThemeConstants.placeholder, width: 1),
                     ),
-                    errorText: _passwordError,  // Display manual errors (e.g., from auth)
-                    errorStyle: const TextStyle(color: ThemeConstants.red),
+                    focusedBorder: const OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(15)),
+                      borderSide: BorderSide(color: ThemeConstants.primary, width: 1.5),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(_showPassword ? Icons.visibility_off : Icons.visibility, color: ThemeConstants.primary),
+                      onPressed: () => setState(() => _showPassword = !_showPassword),
+                    ),
+                    errorText: _passwordError,
+                    errorStyle: const TextStyle(color: Colors.red, fontSize: 11),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
-                  onChanged: (value) {
-                    // Clear error on typing (real-time)
-                    if (_passwordError != null) {
-                      setState(() => _passwordError = null);
-                    }
-                  },
-                  onTap: () {
-                    if (_passwordError != null) {
-                      setState(() => _passwordError = null);
-                    }
-                  },
-                  validator: _validatePassword,  // Pure function - returns String? or null
+                  onChanged: (_) => setState(() => _passwordError = null),
+                  validator: _validatePassword,
                 ),
-                if (_passwordError != null) const SizedBox(height: 4),
+
                 // Forgot Password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: _isLoading ? null : () => _navigateToRecovery(context),
-                    child: const Text('Forgot Password', style: TextStyle(color: ThemeConstants.accent)),
+                    onPressed: _isLoading ? null : _navigateToRecovery,
+                    child: const Text('Forgot Password?', style: TextStyle(color: ThemeConstants.accent)),
                   ),
                 ),
+
                 const SizedBox(height: 40),
+
                 // Login Button
                 SizedBox(
                   width: double.infinity,
@@ -338,20 +261,20 @@ Future<void> _handleLogin(BuildContext context) async {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ThemeConstants.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(8)),
-                      ),
+                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
                     ),
                     child: _isLoading
                         ? const CircularProgressIndicator(color: Colors.white)
                         : const Text('Log in', style: TextStyle(color: Colors.white, fontSize: 18)),
                   ),
                 ),
+
                 const SizedBox(height: 20),
+
                 // Terms Text
                 const Text(
                   'By continuing, you agree to the Terms and Conditions and Privacy Policy.',
-                  style: TextStyle(fontSize: 14, color:ThemeConstants.black),
+                  style: TextStyle(fontSize: 14, color: ThemeConstants.black),
                   textAlign: TextAlign.center,
                 ),
               ],

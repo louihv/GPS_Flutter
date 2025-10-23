@@ -35,8 +35,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _handleScreenPress() {
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
+   void _handleGetStarted() {
     Navigator.pushReplacementNamed(context, '/register');
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -68,30 +74,67 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
                 textAlign: TextAlign.center,
               ),
-              const Spacer(flex: 2),  // Push button to bottom
+              const Spacer(flex: 2),  
               // Button
+              
+              Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.6,
-                child: ElevatedButton(
-                  onPressed: _handleScreenPress,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ThemeConstants.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                width: MediaQuery.of(context).size.width * 0.8,
+                child: OutlinedButton(
+                  onPressed: _handleGetStarted, 
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    side: BorderSide(
+                      color: ThemeConstants.primary, 
+                      width: 1.5,
                     ),
-                    elevation: 0,  // Flat like RN TouchableOpacity
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 0,
                   ),
                   child: Text(
-                    'Let\'s Begin',
+                    "Get Started",
                     style: GoogleFonts.poppins(
                       fontSize: 18,
-                      color: const Color(0xFFFFF9F0),  // #FFF9F0
-                      fontWeight: FontWeight.w400,  // Poppins_Regular
-                    ),
-                  ),
+                      color: ThemeConstants.primary,
+                      fontWeight: FontWeight.w400,
                 ),
               ),
+            ),
+          ),
+           const SizedBox(height: 10),
+          SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: ElevatedButton(
+                    onPressed: _handleScreenPress,
+                    style: ElevatedButton.styleFrom(
+                    backgroundColor: ThemeConstants.primary,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    elevation: 6,
+                    shadowColor: Colors.black.withOpacity(0.3),
+                  ),
+                  child: Text(
+                    "Log In",
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      color: const Color(0xFFFFF9F0),
+                      fontWeight: FontWeight.w400,
+                    ),
+                  ),
+
+                  ),
+                ),
+        ],
+      ),
+
               const Spacer(),  // Extra space below button
             ],
           ),

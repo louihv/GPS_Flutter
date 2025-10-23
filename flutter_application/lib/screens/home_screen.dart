@@ -31,15 +31,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   late final WebViewController _webViewController;
   final Map<String, Map<String, dynamic>> _weatherCache = {};
   bool _isLoading = true;
-  bool _webViewLoaded = false; // Now mutable to track WebView loading state
+  bool _webViewLoaded = false; 
   String? _contactPerson;
   String? _firstName;
   String? _lastName;
-  int _selectedIndex = 0; // For bottom navigation bar
+  int _selectedIndex = 0;
 
 
-  // Replace with your OpenWeatherMap API key
-  static const String _openWeatherApiKey = 'YOUR_OPEN_WEATHER_API_KEY_HERE';
+  // Replace with OpenWeatherMap API key
+  // static const String _openWeatherApiKey = 'YOUR_OPEN_WEATHER_API_KEY_HERE';
 
   @override
   void initState() {
@@ -66,7 +66,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           },
           onWebResourceError: (error) {
             debugPrint('WebView error: ${error.description}');
-            Fluttertoast.showToast(msg: 'Failed to load map. Please check your internet connection.');
+            Fluttertoast.showToast(msg: 'Please check your internet connection.');
             if (mounted) {
               setState(() => _isLoading = false);
             }
@@ -323,7 +323,6 @@ String get _mapHtml {
       let weatherCache = new Map();
       let searchBarVisible = false;
       let mapType = '$_mapType';
-      const OPEN_WEATHER_API_KEY = "$_openWeatherApiKey";
 
       // Polyline decoder function for OSRM encoded geometry
       function decodePolyline(encoded) {
@@ -994,7 +993,6 @@ void _handleWebViewMessage(String message) {
         _searchQuery = data['formattedAddress'];
         _suggestions = [];
       });
-      _loadWeather(double.parse(data['latitude']), double.parse(data['longitude']), false);
     } else if (data['action'] == 'requestUserLocation') {
       _returnToUserLocation();
     } else if (data['action'] == 'toggleWeather') {
@@ -1052,29 +1050,6 @@ void _handleWebViewMessage(String message) {
   }
 }
 
-
-  Future<void> _loadWeather(double lat, double lng, bool isUserLocation) async {
-    try {
-      final cacheKey = '${lat}_$lng';
-      if (_weatherCache.containsKey(cacheKey)) {
-        _createWeatherPopup(lat, lng, _weatherCache[cacheKey]!, isUserLocation);
-        return;
-      }
-      final response = await http.get(Uri.parse(
-        'https://api.openweathermap.org/data/2.5/weather?lat=$lat&lon=$lng&appid=$_openWeatherApiKey&units=metric',
-      ));
-      if (response.statusCode == 200) {
-        final weatherData = jsonDecode(response.body);
-        _weatherCache[cacheKey] = weatherData;
-        _createWeatherPopup(lat, lng, weatherData, isUserLocation);
-      } else {
-        throw Exception('Weather API error: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('Weather fetch error: $e');
-      Fluttertoast.showToast(msg: 'Failed to load weather data: $e');
-    }
-  }
 
   void _createWeatherPopup(double lat, double lng, Map<String, dynamic> weatherData, bool isUserLocation) {
     final condition = (weatherData['weather'][0]['main'] as String).toLowerCase();

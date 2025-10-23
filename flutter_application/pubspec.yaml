@@ -48,9 +48,9 @@ dependencies:
   material_design_icons_flutter: ^7.0.7296
 
   flutter_map_marker_cluster: ^1.1.0
-  flutter_map: ^7.0.2        # ✅ newly added
-  latlong2: ^0.9.1           # ✅ newly added
-
+  flutter_map: ^7.0.2       
+  latlong2: ^0.9.1    
+  firebase_dynamic_links: 6.1.10
   
   
 
