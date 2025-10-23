@@ -93,8 +93,6 @@ class MyApp extends StatelessWidget {
         '/org_request': (context) => const OrgRequestPage(),
         '/recommendations': (context) => const RecommendationsPage(),
         '/map': (context) => const MapPage(), 
-
-
       },
     );
   }
