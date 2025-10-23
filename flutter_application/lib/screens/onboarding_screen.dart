@@ -35,7 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   void _handleScreenPress() {
-    Navigator.pushReplacementNamed(context, '/login');
+    Navigator.pushReplacementNamed(context, '/register');
   }
 
   @override

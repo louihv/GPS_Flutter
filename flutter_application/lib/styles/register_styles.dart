@@ -52,26 +52,31 @@ class RegisterStyles {
       hintText: hintText,
       errorText: errorText,
       suffixIcon: suffixIcon,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       filled: true,
       fillColor: ThemeConstants.white,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Color(0xFF565252).withOpacity(0.24), width: 2),
+        borderSide: BorderSide(color: Color(0xFF565252).withOpacity(0.24), width: 1),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Color(0xFF565252).withOpacity(0.24), width: 2),
+        borderSide: BorderSide(color: Color(0xFF565252).withOpacity(0.24), width: 1),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: ThemeConstants.primary, width: 2),
+        borderSide: BorderSide(color: ThemeConstants.primary, width: 1),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: Colors.red, width: 2),
+        borderSide: BorderSide(color: Colors.red, width: 1),
       ),
       errorStyle: const TextStyle(color: Colors.red),
+      labelStyle: GoogleFonts.poppins(
+      fontSize: 12, 
+      fontWeight: FontWeight.w400,
+      color: const Color(0xFF121212),
+    ),
     );
   }
 
@@ -102,7 +107,6 @@ class RegisterStyles {
     elevation: 2,
   );
 
-  // Text Styles (Poppins)
   static TextStyle titleStyle = GoogleFonts.poppins(
     fontSize: 26,
     fontWeight: FontWeight.w500,
@@ -115,15 +119,29 @@ class RegisterStyles {
     color: ThemeConstants.accent,
   );
 
+  static TextStyle inputStyle = GoogleFonts.poppins(
+    fontSize: 13,
+    fontWeight: FontWeight.normal,
+    color: ThemeConstants.black,
+  );
+
+
   static TextStyle labelStyle = GoogleFonts.poppins(
     fontSize: 14,
     fontWeight: FontWeight.w700,
     color: ThemeConstants.primary,
   );
 
-  static TextStyle nameLabelStyle = labelStyle.copyWith(fontSize: 14);  // For first/last name
+  static TextStyle textSkills = GoogleFonts.poppins(
+    fontSize: 12,
+    fontWeight: FontWeight.normal,
+    color: Color(0xFF121212),
+);
 
-  static TextStyle orgLabelStyle = labelStyle.copyWith(fontSize: 14);  // For organization
+
+  static TextStyle nameLabelStyle = labelStyle.copyWith(fontSize: 12);  
+
+  static TextStyle orgLabelStyle = labelStyle.copyWith(fontSize: 12);  
 
   static TextStyle buttonTextStyle = GoogleFonts.poppins(
     fontSize: 16,
@@ -132,7 +150,7 @@ class RegisterStyles {
   );
 
   static TextStyle recoverTextStyle = GoogleFonts.poppins(
-    fontSize: 14,
+    fontSize: 12,
     color: ThemeConstants.accent,
     fontWeight: FontWeight.w400,
     decoration: TextDecoration.underline,
@@ -142,6 +160,6 @@ class RegisterStyles {
     fontSize: 12,
     color: ThemeConstants.black,
     fontWeight: FontWeight.w400,
-    height: 1.57,  // lineHeight approximation
+    height: 1.57,  
   );
 }

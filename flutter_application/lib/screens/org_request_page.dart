@@ -4,7 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class OrgRequestPage extends StatefulWidget {
-  const OrgRequestPage({Key? key}) : super(key: key);
+  const OrgRequestPage({super.key});
 
   @override
   State<OrgRequestPage> createState() => _OrgRequestPageState();
