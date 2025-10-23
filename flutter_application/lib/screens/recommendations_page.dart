@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_application/screens/details_page.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:math' show cos, sqrt, asin;
 
@@ -18,7 +17,6 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
   List<Map<String, dynamic>> requests = [];
   List<Map<String, dynamic>> filteredRequests = [];
-
   final TextEditingController _searchController = TextEditingController();
 
   Position? _currentPosition;
@@ -57,7 +55,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
           desiredAccuracy: LocationAccuracy.high);
       setState(() => _currentPosition = pos);
 
-      _fetchRequests(); // fetch after getting location
+      _fetchRequests();
     } catch (e) {
       print("Error getting location: $e");
     }
@@ -71,6 +69,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
           final req = Map<String, dynamic>.from(entry.value);
           req['id'] = entry.key;
 
+          // Distance calculation
           if (_currentPosition != null &&
               req.containsKey('latitude') &&
               req.containsKey('longitude')) {
@@ -84,6 +83,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
             req['distance'] = double.infinity;
           }
 
+          // Join state flags
+          req['_joining'] = false;
+          req['_hasJoined'] = false;
+
           return req;
         }).toList();
 
@@ -94,19 +97,35 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
           filteredRequests = fetched;
           _isLoading = false;
         });
+
+        // Check if user has already joined any request
+        _checkJoinedRequests();
       }
     });
+  }
+
+  Future<void> _checkJoinedRequests() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    for (var req in requests) {
+      final snapshot = await FirebaseDatabase.instance
+          .ref('volunteer_requests/${req['id']}/applicants/${user.uid}')
+          .get();
+      if (snapshot.exists) {
+        setState(() {
+          req['_hasJoined'] = true;
+        });
+      }
+    }
   }
 
   double _calculateDistance(lat1, lon1, lat2, lon2) {
     const p = 0.017453292519943295;
     final a = 0.5 -
         cos((lat2 - lat1) * p) / 2 +
-        cos(lat1 * p) *
-            cos(lat2 * p) *
-            (1 - cos((lon2 - lon1) * p)) /
-            2;
-    return 12742 * asin(sqrt(a)); // in kilometers
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a));
   }
 
   void _filterRequests(String query) {
@@ -128,31 +147,58 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
   }
 
   Future<void> _joinRequest(Map<String, dynamic> req) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You must be logged in to join.')),
-        );
-        return;
-      }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to join.')),
+      );
+      return;
+    }
 
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Confirm Join"),
+        content: Text("Do you want to join '${req['eventName']}'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Join"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => req['_joining'] = true);
+
+    try {
       final applicantRef = FirebaseDatabase.instance
           .ref('volunteer_requests/${req['id']}/applicants/${user.uid}');
-
       await applicantRef.set({
         'email': user.email ?? 'No email',
         'joinedAt': DateTime.now().toIso8601String(),
         'status': 'pending',
       });
 
+      setState(() {
+        req['_hasJoined'] = true;
+        req['_joining'] = false;
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('You’ve joined "${req['eventName']}" successfully!'),
+          content: Text("You've joined '${req['eventName']}' successfully!"),
           backgroundColor: Colors.green.shade600,
         ),
       );
     } catch (e) {
+      setState(() => req['_joining'] = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error joining request: $e')),
       );
@@ -192,7 +238,6 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                     style: const TextStyle(color: Colors.grey)),
                 const SizedBox(height: 12),
                 const Divider(),
-
                 Row(
                   children: [
                     const Icon(Icons.location_on, color: Colors.redAccent),
@@ -203,7 +248,6 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-
                 Row(
                   children: [
                     const Icon(Icons.calendar_today, color: Colors.teal),
@@ -216,7 +260,6 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-
                 Row(
                   children: [
                     const Icon(Icons.group, color: Colors.blueAccent),
@@ -225,14 +268,11 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   ],
                 ),
                 const SizedBox(height: 8),
-
-                if (req['distance'] != null &&
-                    req['distance'] != double.infinity)
+                if (req['distance'] != null && req['distance'] != double.infinity)
                   Text(
                     "📍 Distance: ${req['distance'].toStringAsFixed(2)} km away",
                     style: const TextStyle(color: Colors.teal),
                   ),
-
                 const SizedBox(height: 12),
                 Text(
                   "Skills Required:",
@@ -245,23 +285,34 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   children: (req['skillsRequired'] as List?)
                           ?.map((s) => Chip(
                                 label: Text(s.toString().trim(),
-                                    style:
-                                        const TextStyle(color: Colors.white)),
+                                    style: const TextStyle(color: Colors.white)),
                                 backgroundColor: Colors.teal,
                               ))
                           .toList() ??
                       [const Text('None listed')],
                 ),
                 const SizedBox(height: 24),
-
                 Center(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _joinRequest(req);
-                    },
-                    icon: const Icon(Icons.volunteer_activism),
-                    label: const Text("Join This Request"),
+                    onPressed: req['_hasJoined'] || req['_joining']
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            _joinRequest(req);
+                          },
+                    icon: req['_joining']
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                                strokeWidth: 2, color: Colors.white),
+                          )
+                        : const Icon(Icons.volunteer_activism),
+                    label: Text(req['_hasJoined']
+                        ? "Joined"
+                        : req['_joining']
+                            ? "Joining..."
+                            : "Join"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       minimumSize: const Size(double.infinity, 48),
@@ -275,6 +326,97 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildRequestCard(Map<String, dynamic> req) {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      elevation: 5,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _showRequestDetails(req),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(req['eventName'] ?? 'Unnamed Event',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                  if (req['distance'] != null && req['distance'] != double.infinity)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        "${req['distance'].toStringAsFixed(1)} km",
+                        style: const TextStyle(
+                            color: Colors.teal, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(req['description'] ?? 'No description',
+                  maxLines: 2, overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: (req['skillsRequired'] as List?)
+                        ?.map((s) => Chip(
+                              label: Text(
+                                s.toString(),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 12),
+                              ),
+                              backgroundColor: Colors.teal,
+                              visualDensity: VisualDensity.compact,
+                            ))
+                        .toList() ??
+                    [const Text('No skills listed')],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: req['_hasJoined'] || req['_joining']
+                      ? null
+                      : () => _joinRequest(req),
+                  icon: req['_joining']
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.volunteer_activism),
+                  label: Text(req['_hasJoined']
+                      ? "Joined"
+                      : req['_joining']
+                          ? "Joining..."
+                          : "Join"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -292,15 +434,30 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
           : Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: TextField(
-                    controller: _searchController,
-                    onChanged: _filterRequests,
-                    decoration: InputDecoration(
-                      hintText: "Search by event, skill, or location...",
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _filterRequests,
+                      decoration: InputDecoration(
+                        hintText: "Search by event, skill, or location...",
+                        prefixIcon: const Icon(Icons.search),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 16),
+                      ),
                     ),
                   ),
                 ),
@@ -311,48 +468,7 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                           itemCount: filteredRequests.length,
                           itemBuilder: (context, index) {
                             final req = filteredRequests[index];
-                            return Card(
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
-                              elevation: 3,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
-                              child: ListTile(
-                                leading: const CircleAvatar(
-                                  backgroundColor: Colors.teal,
-                                  child: Icon(Icons.handshake,
-                                      color: Colors.white),
-                                ),
-                                title:
-                                    Text(req['eventName'] ?? 'Unnamed Event'),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(req['description'] ?? 'No description',
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis),
-                                    if (req['distance'] != null &&
-                                        req['distance'] != double.infinity)
-                                      Text(
-                                          "📍 ${req['distance'].toStringAsFixed(2)} km away",
-                                          style: const TextStyle(
-                                              color: Colors.teal,
-                                              fontSize: 13)),
-                                  ],
-                                ),
-                                trailing: const Icon(Icons.arrow_forward_ios,
-                                    size: 18),
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          DetailsPage(request: req,),
-                                    ),
-                                  );
-                                }
-                              ),
-                            );
+                            return _buildRequestCard(req);
                           },
                         ),
                 ),

@@ -1,4 +1,3 @@
-// widgets/custom_bottom_nav_bar.dart
 import 'package:flutter/material.dart';
 import '../constants/theme.dart';
 
@@ -14,49 +13,55 @@ class CustomBottomNavBar extends StatelessWidget {
     required this.isAbAdmin,
   });
 
+  List<BottomNavigationBarItem> _buildNavItems() {
+    if (isAbAdmin) {
+      // 🧭 ABVN/Admin Navigation
+      return const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.dashboard_outlined),
+          activeIcon: Icon(Icons.dashboard),
+          label: 'Dashboard',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.event_note_outlined),
+          activeIcon: Icon(Icons.event_note),
+          label: 'Requests',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map_outlined),
+          activeIcon: Icon(Icons.map),
+          label: 'Overview',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          activeIcon: Icon(Icons.person),
+          label: 'Profile',
+        ),
+      ];
+    } else {
+      // 🧭 Volunteer Navigation
+      return const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.recommend_outlined),
+          activeIcon: Icon(Icons.recommend),
+          label: 'Opportunities',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.map_outlined),
+          activeIcon: Icon(Icons.map),
+          label: 'Map',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline),
+          activeIcon: Icon(Icons.person),
+          label: 'Profile',
+        ),
+      ];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final List<BottomNavigationBarItem> items = [
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.home_outlined),
-        activeIcon: Icon(Icons.home_filled),
-        label: 'Home',
-      ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.dashboard_outlined),
-        activeIcon: Icon(Icons.dashboard),
-        label: 'Dashboard',
-      ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.groups_outlined),
-        activeIcon: Icon(Icons.groups),
-        label: 'Community Board',
-      ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.person_outline),
-        activeIcon: Icon(Icons.person),
-        label: 'Profile',
-      ),
-      // ----- ADMIN ONLY -----
-      if (isAbAdmin)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.add_location_alt_outlined),
-          activeIcon: Icon(Icons.add_location_alt),
-          label: 'Org Request',
-        ),
-      // ----------------------
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.recommend_outlined),
-        activeIcon: Icon(Icons.recommend),
-        label: 'Recommendations',
-      ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.map_outlined),
-        activeIcon: Icon(Icons.map),
-        label: 'Map',
-      ),
-    ];
-
     return BottomNavigationBar(
       currentIndex: currentIndex,
       onTap: onTap,
@@ -67,7 +72,7 @@ class CustomBottomNavBar extends StatelessWidget {
       elevation: 8,
       selectedFontSize: 12,
       unselectedFontSize: 12,
-      items: items,
+      items: _buildNavItems(),
     );
   }
 }

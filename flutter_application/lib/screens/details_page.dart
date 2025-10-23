@@ -15,62 +15,97 @@ class DetailsPage extends StatefulWidget {
 
 class _DetailsPageState extends State<DetailsPage> {
   bool _hasJoined = false;
+  bool _joining = false;
   bool _loading = true;
+
+  int _joinedCount = 0;
+  late DatabaseReference _applicantsRef;
+  late Stream<DatabaseEvent> _applicantsStream;
 
   @override
   void initState() {
     super.initState();
+    _applicantsRef = FirebaseDatabase.instance
+        .ref('volunteer_requests/${widget.request['id']}/applicants');
+    _applicantsStream = _applicantsRef.onValue;
+
+    _listenApplicants();
     _checkIfJoined();
+  }
+
+  void _listenApplicants() {
+    _applicantsStream.listen((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      setState(() {
+        _joinedCount = data?.length ?? 0;
+      });
+    });
   }
 
   Future<void> _checkIfJoined() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final applicantRef = FirebaseDatabase.instance.ref(
-        'volunteer_requests/${widget.request['id']}/applicants/${user.uid}');
-
-    final snapshot = await applicantRef.get();
+    final snapshot = await _applicantsRef.child(user.uid).get();
     if (snapshot.exists) {
       setState(() {
         _hasJoined = true;
       });
     }
-    setState(() {
-      _loading = false;
-    });
+    setState(() => _loading = false);
   }
 
   Future<void> _joinRequest(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Confirm Join"),
+        content: const Text(
+            "Are you sure you want to join this volunteer opportunity?"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("Cancel")),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Join")),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to join.')),
+      );
+      return;
+    }
+
+    setState(() => _joining = true);
+
     try {
-      final user = FirebaseAuth.instance.currentUser;
-
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You must be logged in to join.')),
-        );
-        return;
-      }
-
-      final applicantRef = FirebaseDatabase.instance
-          .ref('volunteer_requests/${widget.request['id']}/applicants/${user.uid}');
-
-      await applicantRef.set({
+      await _applicantsRef.child(user.uid).set({
         'email': user.email ?? 'No email',
         'joinedAt': DateTime.now().toIso8601String(),
         'status': 'pending',
       });
 
-      setState(() => _hasJoined = true);
+      setState(() {
+        _hasJoined = true;
+        _joining = false;
+      });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content:
-              Text('You’ve joined "${widget.request['eventName']}" successfully!'),
+          content: Text(
+              'You’ve joined "${widget.request['eventName']}" successfully!'),
           backgroundColor: Colors.green.shade600,
         ),
       );
     } catch (e) {
+      setState(() => _joining = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error joining request: $e')),
       );
@@ -96,7 +131,6 @@ class _DetailsPageState extends State<DetailsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Banner
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
@@ -107,46 +141,13 @@ class _DetailsPageState extends State<DetailsPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-
                   Text(
                     widget.request['eventName'] ?? 'Untitled Event',
                     style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                        fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(widget.request['description'] ?? 'No description provided.'),
-                  const SizedBox(height: 16),
-                  const Divider(),
-
-                  Row(
-                    children: [
-                      const Icon(Icons.calendar_today, color: Colors.teal),
-                      const SizedBox(width: 6),
-                      Text("Date: ${widget.request['date'] ?? 'N/A'}"),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      const Icon(Icons.access_time, color: Colors.teal),
-                      const SizedBox(width: 6),
-                      Text("Time: ${widget.request['time'] ?? 'N/A'}"),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.location_on, color: Colors.redAccent),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                            widget.request['address'] ?? 'No address provided'),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -154,37 +155,32 @@ class _DetailsPageState extends State<DetailsPage> {
                       const SizedBox(width: 6),
                       Text(
                           "Volunteers needed: ${widget.request['numberNeeded'] ?? 'N/A'}"),
+                      const SizedBox(width: 16),
+                      const Icon(Icons.person, color: Colors.green),
+                      const SizedBox(width: 6),
+                      Text("Joined: $_joinedCount"),
                     ],
                   ),
                   const SizedBox(height: 16),
-
-                  Text(
-                    "Skills Required:",
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold, color: Colors.black87),
-                  ),
+                  Text("Skills Required:",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black87)),
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 8,
                     children: (widget.request['skillsRequired'] as List?)
                             ?.map((s) => Chip(
-                                  label: Text(s.toString().trim(),
-                                      style:
-                                          const TextStyle(color: Colors.white)),
+                                  label: Text(s.toString(),
+                                      style: const TextStyle(color: Colors.white)),
                                   backgroundColor: Colors.teal,
                                 ))
-                            .toList() ??
-                        [const Text('None listed')],
+                            .toList() ?? [const Text('None listed')],
                   ),
                   const SizedBox(height: 24),
-
-                  // OpenStreetMap preview
                   if (latitude != null && longitude != null) ...[
-                    Text(
-                      "Event Location Map:",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, color: Colors.black87),
-                    ),
+                    Text("Event Location Map:",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, color: Colors.black87)),
                     const SizedBox(height: 8),
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
@@ -200,8 +196,7 @@ class _DetailsPageState extends State<DetailsPage> {
                               urlTemplate:
                                   'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                               subdomains: const ['a', 'b', 'c'],
-                              userAgentPackageName:
-                                  'com.example.bayanihan_connect',
+                              userAgentPackageName: 'com.example.bayanihan_connect',
                             ),
                             MarkerLayer(
                               markers: [
@@ -229,29 +224,30 @@ class _DetailsPageState extends State<DetailsPage> {
       bottomNavigationBar: !_loading
           ? Padding(
               padding: const EdgeInsets.all(16.0),
-              child: _hasJoined
-                  ? ElevatedButton.icon(
-                      onPressed: null,
-                      icon: const Icon(Icons.check_circle),
-                      label: const Text("Already Joined"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey,
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    )
-                  : ElevatedButton.icon(
-                      onPressed: () => _joinRequest(context),
-                      icon: const Icon(Icons.volunteer_activism),
-                      label: const Text("Join This Opportunity"),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal,
-                        minimumSize: const Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
+              child: ElevatedButton.icon(
+                onPressed: _hasJoined || _joining
+                    ? null
+                    : () => _joinRequest(context),
+                icon: _joining
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
+                      )
+                    : Icon(_hasJoined ? Icons.check_circle : Icons.volunteer_activism),
+                label: Text(_hasJoined
+                    ? "Already Joined"
+                    : _joining
+                        ? "Joining..."
+                        : "Join This Opportunity"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _hasJoined ? Colors.grey : Colors.teal,
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
             )
           : null,
     );

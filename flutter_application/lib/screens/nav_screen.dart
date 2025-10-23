@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application/screens/admin_volunteer_map.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 
-import '../screens/home_screen.dart';
-import '../screens/dashboard_screen.dart';
-import '../screens/communityboard_screen.dart';
-import '../screens/profile_screen.dart';
-import '../screens/org_request_page.dart';
+// Regular user screens
 import '../screens/recommendations_page.dart';
 import '../screens/map_page.dart';
+import '../screens/profile_screen.dart';
+
+// Admin-only screens
+import '../screens/admin_dashboard_page.dart';
+import '../screens/admin_volunteer_map.dart';
+import '../screens/org_request_page.dart';
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key});
@@ -26,26 +29,26 @@ class _NavScreenState extends State<NavScreen> {
     final auth = Provider.of<AuthProvider>(context);
     final bool isAbAdmin = auth.isAbAdmin;
 
-    final List<Widget> _pages = [
-      const HomeScreen(),
-      const DashboardScreen(),
-      const CommunityBoardScreen(),
-      const ProfileScreen(),
-      if (isAbAdmin) const OrgRequestPage(),
+    // 🧭 Define separate nav items for volunteer vs admin
+    final List<Widget> volunteerPages = [
       const RecommendationsPage(),
       const MapPage(),
+      const ProfileScreen(),
     ];
 
-   
-    int displayedIndex = _currentIndex;
-    if (!isAbAdmin && _currentIndex >= 4) {
-      displayedIndex = _currentIndex + 1; 
-    }
+    final List<Widget> adminPages = [
+      const AdminDashboardPage(),
+      const OrgRequestPage(),
+      const AdminVolunteerMap(),
+      const ProfileScreen(),
+    ];
+
+    final pages = isAbAdmin ? adminPages : volunteerPages;
 
     return Scaffold(
       body: IndexedStack(
-        index: displayedIndex,
-        children: _pages,
+        index: _currentIndex,
+        children: pages,
       ),
       bottomNavigationBar: CustomBottomNavBar(
         currentIndex: _currentIndex,

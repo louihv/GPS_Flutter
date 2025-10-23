@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:geolocator/geolocator.dart';
+import 'details_page.dart'; // ✅ Import your details page
 
 class MapPage extends StatefulWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -21,10 +23,9 @@ class _MapPageState extends State<MapPage> {
 
   List<Map<String, dynamic>> requests = [];
   List<Map<String, dynamic>> filteredRequests = [];
-  LatLng center = const LatLng(14.5995, 120.9842); // Default Manila
+  LatLng center = const LatLng(14.5995, 120.9842); // Manila default
   LatLng? userLocation;
-
-  final PopupController _popupController = PopupController();
+  bool followUser = true;
 
   @override
   void initState() {
@@ -49,15 +50,15 @@ class _MapPageState extends State<MapPage> {
 
     setState(() {
       userLocation = LatLng(pos.latitude, pos.longitude);
-      center = userLocation!;
+      if (followUser) center = userLocation!;
     });
 
     Geolocator.getPositionStream(
-            locationSettings:
-                const LocationSettings(accuracy: LocationAccuracy.high))
-        .listen((pos) {
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    ).listen((pos) {
       setState(() {
         userLocation = LatLng(pos.latitude, pos.longitude);
+        if (followUser) _mapController.move(userLocation!, 14);
       });
     });
   }
@@ -69,14 +70,35 @@ class _MapPageState extends State<MapPage> {
         final fetched = data.entries.map((entry) {
           final req = Map<String, dynamic>.from(entry.value);
           req['id'] = entry.key;
+          if (userLocation != null &&
+              req.containsKey('latitude') &&
+              req.containsKey('longitude')) {
+            req['distance'] = _calculateDistance(
+              userLocation!.latitude,
+              userLocation!.longitude,
+              req['latitude'],
+              req['longitude'],
+            );
+          } else {
+            req['distance'] = double.infinity;
+          }
           return req;
         }).toList();
+
         setState(() {
           requests = fetched;
           filteredRequests = fetched;
         });
       }
     });
+  }
+
+  double _calculateDistance(lat1, lon1, lat2, lon2) {
+    const p = 0.017453292519943295;
+    final a = 0.5 -
+        cos((lat2 - lat1) * p) / 2 +
+        cos(lat1 * p) * cos(lat2 * p) * (1 - cos((lon2 - lon1) * p)) / 2;
+    return 12742 * asin(sqrt(a)); // km
   }
 
   void _filterRequests(String query) {
@@ -93,81 +115,11 @@ class _MapPageState extends State<MapPage> {
     });
   }
 
-  void _showRequestPopup(Map<String, dynamic> req) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(20),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 50,
-                  height: 5,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              Text(req['eventName'] ?? 'No Title',
-                  style: const TextStyle(
-                      fontSize: 22, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              Text(req['description'] ?? 'No description provided.'),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  const Icon(Icons.location_on, color: Colors.redAccent),
-                  const SizedBox(width: 6),
-                  Expanded(child: Text(req['address'] ?? 'No address')),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today, color: Colors.teal),
-                  const SizedBox(width: 6),
-                  Text("Date: ${req['date'] ?? 'N/A'}"),
-                  const SizedBox(width: 16),
-                  const Icon(Icons.access_time, color: Colors.teal),
-                  const SizedBox(width: 6),
-                  Text("Time: ${req['time'] ?? 'N/A'}"),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const Icon(Icons.group, color: Colors.blueAccent),
-                  const SizedBox(width: 6),
-                  Text("Volunteers needed: ${req['numberNeeded'] ?? 'N/A'}"),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Text("Skills Required:",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.black87)),
-              const SizedBox(height: 6),
-              Wrap(
-                spacing: 8,
-                children: (req['skillsRequired'] as List?)
-                        ?.map((s) => Chip(
-                              label: Text(s.toString(),
-                                  style:
-                                      const TextStyle(color: Colors.white)),
-                              backgroundColor: Colors.teal,
-                            ))
-                        .toList() ??
-                    [const Text('None listed')],
-              ),
-            ],
-          ),
-        ),
+  void _openDetails(Map<String, dynamic> req) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetailsPage(request: req), // ✅ your details view
       ),
     );
   }
@@ -178,14 +130,21 @@ class _MapPageState extends State<MapPage> {
       final lat = req['latitude']?.toDouble();
       final lng = req['longitude']?.toDouble();
       if (lat == null || lng == null) return null;
+
+      Color color = Colors.redAccent;
+      if (req['distance'] != null && req['distance'] <= 5) {
+        color = Colors.green;
+      } else if (req['distance'] != null && req['distance'] <= 15) {
+        color = Colors.orange;
+      }
+
       return Marker(
         point: LatLng(lat, lng),
         width: 50,
         height: 50,
         child: GestureDetector(
-          onTap: () => _showRequestPopup(req),
-          child:
-              const Icon(Icons.location_pin, color: Colors.redAccent, size: 40),
+          onTap: () => _openDetails(req),
+          child: Icon(Icons.location_pin, color: color, size: 40),
         ),
       );
     }).whereType<Marker>().toList();
@@ -206,15 +165,15 @@ class _MapPageState extends State<MapPage> {
       ),
       body: Column(
         children: [
-          // Search bar
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
               controller: _searchController,
               decoration: const InputDecoration(
-                  hintText: 'Search by event, skill, or location',
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder()),
+                hintText: 'Search events, skills, or locations',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
               onChanged: _filterRequests,
             ),
           ),
@@ -257,14 +216,13 @@ class _MapPageState extends State<MapPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          if (userLocation != null) {
+          setState(() => followUser = !followUser);
+          if (followUser && userLocation != null) {
             _mapController.move(userLocation!, 14);
-          } else {
-            _mapController.move(center, 11);
           }
         },
-        backgroundColor: Colors.teal,
-        child: const Icon(Icons.my_location),
+        backgroundColor: followUser ? Colors.teal : Colors.grey,
+        child: Icon(followUser ? Icons.my_location : Icons.location_disabled),
       ),
     );
   }

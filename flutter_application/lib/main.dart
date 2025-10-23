@@ -7,18 +7,17 @@ import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/dashboard_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/recovery_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/nav_screen.dart';
-import 'screens/communityboard_screen.dart';
 
 import 'screens/org_request_page.dart';
 import 'screens/recommendations_page.dart';
 import 'screens/map_page.dart';
 
+import 'screens/admin_dashboard_page.dart';
+import 'screens/admin_volunteer_map.dart';
 
 
 
@@ -84,15 +83,17 @@ class MyApp extends StatelessWidget {
       routes: {
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
-        '/home': (context) => const HomeScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/recovery': (context) => const RecoveryScreen(),
         '/profile': (context) => const ProfileScreen(), 
-        '/communityboard_screen': (context) => const CommunityBoardScreen(),
+
         '/org_request': (context) => const OrgRequestPage(),
         '/recommendations': (context) => const RecommendationsPage(),
         '/map': (context) => const MapPage(), 
+
+        '/admin_dashboard': (context) => const AdminDashboardPage(),
+        '/admin_map': (context) => const AdminVolunteerMap(),
+
       },
     );
   }
