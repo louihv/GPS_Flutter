@@ -4,7 +4,9 @@ import '../screens/home_screen.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/communityboard_screen.dart';
+
 import '../screens/org_request_page.dart'; // ✅ Import your new page
+import '../screens/recommendations_page.dart'; // ✅ New import
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key});
@@ -23,6 +25,8 @@ class _NavScreenState extends State<NavScreen> {
     const CommunityBoardScreen(),
     const ProfileScreen(),
     const OrgRequestPage(), // ✅ New page
+    const RecommendationsPage(),  // ✅ Added
+
   ];
 
   @override
