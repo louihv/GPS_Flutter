@@ -90,10 +90,9 @@ class MyApp extends StatelessWidget {
         '/recovery': (context) => const RecoveryScreen(),
         '/profile': (context) => const ProfileScreen(), 
         '/communityboard_screen': (context) => const CommunityBoardScreen(),
-        '/org_request': (context) => const OrgRequestPage(), // ✅ Added new route
+        '/org_request': (context) => const OrgRequestPage(),
         '/recommendations': (context) => const RecommendationsPage(),
-        '/map': (context) => const MapPage(),  // ✅ Add this line
-
+        '/map': (context) => const MapPage(), 
 
 
       },
