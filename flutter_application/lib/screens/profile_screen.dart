@@ -4,11 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
-import 'package:flutter_application/screens/communityboard_screen.dart';
-=======
 import 'package:flutter_application/styles/global_styles.dart';
->>>>>>> 3b7954a3b9e3cec92e9f2fffaab4c671e8bc2f02
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
@@ -17,7 +13,7 @@ import '../styles/profile_styles.dart';
 import '../providers/auth_provider.dart' as myAuth;
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({Key? key}) : super(key: key);
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -782,19 +778,11 @@ Widget build(BuildContext context) {
                             fontSize: 14,
                           ),
                         ),
-<<<<<<< HEAD
-                      ],
-                    ),
-                  );
-                },
-              ),
-=======
                       ),
                     ],
                   ),
                 );
               }).toList(),
->>>>>>> 3b7954a3b9e3cec92e9f2fffaab4c671e8bc2f02
             ],
           )
         ],
@@ -819,76 +807,10 @@ Widget build(BuildContext context) {
                   'Terms and Conditions',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-<<<<<<< HEAD
-                const Divider(),
-                const Expanded(
-                  child: SingleChildScrollView(
-                    padding: EdgeInsets.all(16),
-                    child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      SectionTitle('1. Introduction'),
-                      SectionText(
-                        'Welcome to Bayanihan! These Terms and Conditions ("Terms") govern your use of the Bayanihan application and services. By accessing or using Bayanihan, you agree to be bound by these Terms.',
-                      ),
-                      SectionTitle('2. User Responsibilities'),
-                      SectionBullet('You must provide accurate and complete information during registration and keep it updated.'),
-                      SectionBullet('You are responsible for maintaining the confidentiality of your account password.'),
-                      SectionBullet('You agree to use Bayanihan only for lawful purposes and in accordance with these Terms.'),
-
-                      SectionTitle('3. Data Collection and Privacy'),
-                      SectionText(
-                        'By using Bayanihan, you consent to the collection and storage of your data for disaster response and related purposes as outlined in our Privacy Policy. Our Privacy Policy is an integral part of these Terms and Conditions. We commit to protecting your data and using it responsibly.',
-                      ),
-
-                      SectionTitle('4. Prohibited Activities'),
-                      SectionText('You agree not to engage in any of the following prohibited activities:'),
-                      SectionBullet('Violating any applicable laws or regulations.'),
-                      SectionBullet('Transmitting any harmful or malicious code.'),
-                      SectionBullet('Interfering with the operation of Bayanihan.'),
-                      SectionBullet('Attempting to gain unauthorized access to our systems.'),
-
-                      SectionTitle('5. Intellectual Property'),
-                      SectionText(
-                        'All content and intellectual property on Bayanihan, including but not limited to text, graphics, logos, and software, are the property of Bayanihan or its licensors and are protected by intellectual property laws.',
-                      ),
-
-                      SectionTitle('6. Disclaimer of Warranties'),
-                      SectionText(
-                        'Bayanihan is provided "as is" and "as available" without any warranties of any kind, either express or implied. We do not warrant that the service will be uninterrupted, error-free, or secure.',
-                      ),
-
-                      SectionTitle('7. Limitation of Liability'),
-                      SectionText(
-                        'To the fullest extent permitted by applicable law, Bayanihan shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses, resulting from (a) your access to or use of or inability to access or use the service; (b) any conduct or content of any third party on the service; (c) any content obtained from the service; and (d) unauthorized access, use or alteration of your transmissions or content.',
-                      ),
-
-                      SectionTitle('8. Governing Law'),
-                      SectionText(
-                        'These Terms shall be governed and construed in accordance with the laws of the Philippines, without regard to its conflict of law provisions.',
-                      ),
-
-                      SectionTitle('9. Changes to Terms'),
-                      SectionText(
-                        'We reserve the right to modify or replace these Terms at any time. If a revision is material, we will provide at least 30 days\' notice prior to any new terms taking effect. By continuing to access or use our Service after those revisions become effective, you agree to be bound by the revised terms.',
-                      ),
-
-                      SectionTitle('10. Contact Us'),
-                      SectionText(
-                        'If you have any questions about these Terms, please contact us at support@bayanihan.com.',
-                      ),
-                    ],
-                  ),
-                  ),
-                ),
-                const Divider(),
-                Padding(
-=======
               ),
               const Divider(),
               Expanded(
                 child: SingleChildScrollView(
->>>>>>> 3b7954a3b9e3cec92e9f2fffaab4c671e8bc2f02
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
