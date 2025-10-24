@@ -41,8 +41,7 @@ class AuthWrapper extends StatelessWidget {
     final authProvider = Provider.of<AuthProvider>(context);
     print('AuthProvider user: ${authProvider.user}'); 
     if (authProvider.user == null) {
-      print('Navigating to LoginScreen');
-      return const LoginScreen();
+      return const OnboardingScreen();
     }
     print('Navigating to NavScreen');
     return const NavScreen();
