@@ -3,6 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../constants/theme.dart';
+import '../styles/volunteermap_styles.dart';
 
 class AdminVolunteerMap extends StatefulWidget {
   const AdminVolunteerMap({Key? key}) : super(key: key);
@@ -18,9 +21,12 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
 
   List<Marker> eventMarkers = [];
   List<Marker> volunteerMarkers = [];
+  List<Marker> filteredEventMarkers = [];
+  List<Marker> filteredVolunteerMarkers = [];
   bool showVolunteers = false;
   int totalEvents = 0;
   int totalVolunteers = 0;
+  String searchQuery = '';
 
   @override
   void initState() {
@@ -51,7 +57,7 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
           height: 45,
           child: GestureDetector(
             onTap: () => _showEventDetails(eventData),
-            child: const Icon(Icons.flag, color: Colors.redAccent, size: 36),
+            child: const Icon(Icons.flag, color: ThemeConstants.accent, size: 36),
           ),
         ));
 
@@ -71,7 +77,7 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
                 child: GestureDetector(
                   onTap: () => _showVolunteerDetails(applicantData),
                   child: const Icon(Icons.person_pin_circle,
-                      color: Colors.teal, size: 34),
+                      color: ThemeConstants.accentBlue, size: 34),
                 ),
               ));
             }
@@ -82,9 +88,44 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
       setState(() {
         eventMarkers = eventList;
         volunteerMarkers = volunteerList;
+        filteredEventMarkers = eventList;
+        filteredVolunteerMarkers = volunteerList;
         totalEvents = eventList.length;
         totalVolunteers = volunteerCount;
       });
+    });
+  }
+
+  void _filterMarkers(String query) {
+    setState(() {
+      searchQuery = query;
+      if (query.isEmpty) {
+        filteredEventMarkers = eventMarkers;
+        filteredVolunteerMarkers = volunteerMarkers;
+      } else {
+        filteredEventMarkers = eventMarkers.where((marker) {
+          final eventData = marker.child is GestureDetector
+              ? (marker.child as GestureDetector).child is Icon
+                  ? marker // Assuming event markers have Icon as child
+                  : null
+              : null;
+          if (eventData == null) return false;
+          // Access event data from the marker's associated data
+          final eventName = (marker as dynamic).eventData?['eventName']?.toString().toLowerCase() ?? '';
+          return eventName.contains(query.toLowerCase());
+        }).toList();
+
+        filteredVolunteerMarkers = volunteerMarkers.where((marker) {
+          final volunteerData = marker.child is GestureDetector
+              ? (marker.child as GestureDetector).child is Icon
+                  ? marker
+                  : null
+              : null;
+          if (volunteerData == null) return false;
+          final email = (marker as dynamic).applicantData?['email']?.toString().toLowerCase() ?? '';
+          return email.contains(query.toLowerCase());
+        }).toList();
+      }
     });
   }
 
@@ -92,31 +133,31 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(MapStyles.borderRadiusLarge))),
       builder: (context) => Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(MapStyles.spacingMedium),
         child: Wrap(children: [
           ListTile(
-            leading: const Icon(Icons.flag, color: Colors.redAccent),
+            leading: const Icon(Icons.flag, color: ThemeConstants.accent),
             title: Text(data['eventName'] ?? 'Unnamed Event',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(data['description'] ?? 'No description available.'),
+                style: MapStyles.output.copyWith(fontWeight: FontWeight.bold)),
+            subtitle: Text(data['description'] ?? 'No description available.', style: MapStyles.subtitle),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: MapStyles.spacingSmall),
           Row(
             children: [
-              const Icon(Icons.location_on, color: Colors.grey),
-              const SizedBox(width: 4),
+              const Icon(Icons.location_on, color: ThemeConstants.placeholder),
+              const SizedBox(width: MapStyles.spacingXSmall),
               Text(
                   'Lat: ${data['latitude']}, Lng: ${data['longitude']}',
-                  style: const TextStyle(fontSize: 13, color: Colors.black54)),
+                  style: MapStyles.subtitle),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: MapStyles.spacingSmall),
           Text(
               "Applicants: ${(data['applicants'] as Map?)?.length ?? 0}",
-              style: const TextStyle(color: Colors.teal)),
+              style: MapStyles.output.copyWith(color: ThemeConstants.accentBlue)),
         ]),
       ),
     );
@@ -126,21 +167,21 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(MapStyles.borderRadiusLarge))),
       builder: (context) => Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(MapStyles.spacingMedium),
         child: Wrap(children: [
           ListTile(
-            leading: const Icon(Icons.person, color: Colors.teal),
+            leading: const Icon(Icons.person, color: ThemeConstants.accentBlue),
             title: Text(data['email'] ?? 'Anonymous Volunteer',
-                style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text('Status: ${data['status'] ?? 'Pending'}'),
+                style: MapStyles.output.copyWith(fontWeight: FontWeight.bold)),
+            subtitle: Text('Status: ${data['status'] ?? 'Pending'}', style: MapStyles.subtitle),
           ),
           if (data['latitude'] != null)
             Text(
               'Location: (${data['latitude']}, ${data['longitude']})',
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
+              style: MapStyles.subtitle,
             ),
         ]),
       ),
@@ -149,15 +190,20 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFA3B99),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.symmetric(
+          vertical: MapStyles.spacingMedium, horizontal: MapStyles.spacingLarge),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildStatBox(Icons.flag, "Events", totalEvents, const Color.fromARGB(255, 255, 255, 255)),
-          _buildStatBox(Icons.people, "Volunteers", totalVolunteers, const Color.fromARGB(255, 255, 255, 255)),
+          Text('Volunteer Map Overview', style: MapStyles.header),
+          const SizedBox(height: MapStyles.spacingXSmall),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildStatBox(Icons.flag, "Events", totalEvents, ThemeConstants.accent),
+              _buildStatBox(Icons.people, "Volunteers", totalVolunteers, ThemeConstants.accentBlue),
+            ],
+          ),
         ],
       ),
     );
@@ -166,15 +212,16 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
   Widget _buildStatBox(IconData icon, String label, int count, Color color) {
     return Row(
       children: [
-        CircleAvatar(backgroundColor: color.withOpacity(0.2), child: Icon(icon, color: color)),
-        const SizedBox(width: 10),
+        CircleAvatar(
+            backgroundColor: color.withOpacity(0.2), child: Icon(icon, color: color)),
+        const SizedBox(width: MapStyles.spacingSmall),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(count.toString(),
-                style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
-            Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                style: MapStyles.output.copyWith(
+                    color: color, fontWeight: FontWeight.bold, fontSize: 18)),
+            Text(label, style: MapStyles.subtitle),
           ],
         ),
       ],
@@ -183,71 +230,103 @@ class _AdminVolunteerMapState extends State<AdminVolunteerMap> {
 
   @override
   Widget build(BuildContext context) {
-    final markersToShow = showVolunteers ? volunteerMarkers : eventMarkers;
+    final markersToShow = showVolunteers ? filteredVolunteerMarkers : filteredEventMarkers;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Volunteer Map Overview',style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.normal,
-                  color: Colors.white)),
-                  centerTitle: true,
-        backgroundColor: Color(0xFF14AEBB),
-        actions: [
-          IconButton(
-            tooltip: showVolunteers ? "Show Events" : "Show Volunteers",
-            icon: Icon(showVolunteers ? Icons.flag : Icons.people_alt),
-            onPressed: () {
-              setState(() => showVolunteers = !showVolunteers);
-              _mapController.move(LatLng(14.5995, 120.9842), 6);
-            },
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomRight,
+            colors: [Color(0x6614AEBB), Color(0xFFFFF9F0)],
           ),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: FlutterMap(
-              mapController: _mapController,
-              options: const MapOptions(
-                initialCenter: LatLng(14.5995, 120.9842),
-                initialZoom: 6.3,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  userAgentPackageName: 'com.example.app',
-                ),
-                MarkerClusterLayerWidget(
-                  options: MarkerClusterLayerOptions(
-                    markers: markersToShow,
-                    maxClusterRadius: 45,
-                    size: const Size(45, 45),
-                    builder: (context, cluster) => Container(
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Colors.teal,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        cluster.length.toString(),
-                        style:
-                            const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: MapStyles.spacingSmall, vertical: MapStyles.spacingXSmall),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: ThemeConstants.placeholder),
+                    borderRadius: BorderRadius.circular(MapStyles.borderRadiusXLarge),
+                  ),
+                  child: TextField(
+                    onChanged: _filterMarkers,
+                    style: MapStyles.output,
+                    decoration: InputDecoration(
+                      labelText: showVolunteers ? 'Search volunteers...' : 'Search events...',
+                      labelStyle: MapStyles.subtitle,
+                      prefixIcon: const Icon(Icons.search, color: ThemeConstants.primary),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: MapStyles.spacingMedium, horizontal: MapStyles.spacingMedium),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Expanded(
+                child: FlutterMap(
+                  mapController: _mapController,
+                  options: const MapOptions(
+                    initialCenter: LatLng(14.5995, 120.9842),
+                    initialZoom: 6.3,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      userAgentPackageName: 'com.example.app',
+                    ),
+                    MarkerClusterLayerWidget(
+                      options: MarkerClusterLayerOptions(
+                        markers: markersToShow,
+                        maxClusterRadius: 45,
+                        size: const Size(45, 45),
+                        builder: (context, cluster) => Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: ThemeConstants.accentBlue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            cluster.length.toString(),
+                            style: MapStyles.output.copyWith(
+                                color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => setState(() => showVolunteers = !showVolunteers),
-        label: Text(showVolunteers ? "Show Events" : "Show Volunteers", style: const TextStyle(color: Color.fromARGB(255, 255, 255, 255)),),
-        icon: Icon(showVolunteers ? Icons.flag : Icons.people_alt, color: Color.fromARGB(255, 255, 255, 255),),
-        backgroundColor: Color(0xFF14AEBB),
+        onPressed: () {
+          setState(() {
+            showVolunteers = !showVolunteers;
+            searchQuery = '';
+            filteredEventMarkers = eventMarkers;
+            filteredVolunteerMarkers = volunteerMarkers;
+            _mapController.move(const LatLng(14.5995, 120.9842), 6);
+          });
+        },
+        label: Text(
+          showVolunteers ? "Show Events" : "Show Volunteers",
+          style: MapStyles.output.copyWith(color: Colors.white),
+        ),
+        icon: Icon(
+          showVolunteers ? Icons.flag : Icons.people_alt,
+          color: Colors.white,
+        ),
+        backgroundColor: ThemeConstants.accentBlue,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapStyles.borderRadiusMedium),
+        ),
       ),
     );
   }

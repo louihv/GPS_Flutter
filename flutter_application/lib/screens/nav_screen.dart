@@ -1,18 +1,14 @@
+// nav_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_application/screens/admin_volunteer_map.dart';
 import 'package:provider/provider.dart';
-import '../providers/auth_provider.dart';
+import '../providers/auth_provider.dart' as myAuth;
 import '../widgets/custom_bottom_nav_bar.dart';
-
-// Regular user screens
 import '../screens/recommendations_page.dart';
 import '../screens/map_page.dart';
 import '../screens/profile_screen.dart';
-
-// Admin-only screens
 import '../screens/admin_dashboard_page.dart';
-import '../screens/admin_volunteer_map.dart';
 import '../screens/org_request_page.dart';
+import '../screens/admin_volunteer_map.dart';
 
 class NavScreen extends StatefulWidget {
   const NavScreen({super.key});
@@ -26,7 +22,7 @@ class _NavScreenState extends State<NavScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
+    final auth = Provider.of<myAuth.AuthProvider>(context);
     final bool isAbAdmin = auth.isAbAdmin;
 
     final List<Widget> volunteerPages = [

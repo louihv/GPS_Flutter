@@ -1,33 +1,30 @@
+// main.dart
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application/constants/theme.dart';
 import 'package:flutter_application/screens/profile_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'firebase_options.dart';
-import 'providers/auth_provider.dart';
+import 'providers/auth_provider.dart' as myAuth;
 import 'screens/login_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/recovery_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/nav_screen.dart';
-
 import 'screens/org_request_page.dart';
 import 'screens/recommendations_page.dart';
 import 'screens/map_page.dart';
-
 import 'screens/admin_dashboard_page.dart';
 import 'screens/admin_volunteer_map.dart';
-
-
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(
     ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
+      create: (context) => myAuth.AuthProvider(),
       child: MyApp(),
     ),
   );
@@ -38,13 +35,28 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    print('AuthProvider user: ${authProvider.user}'); 
-    if (authProvider.user == null) {
-      return const OnboardingScreen();
-    }
-    print('Navigating to NavScreen');
-    return const NavScreen();
+    final authProvider = Provider.of<myAuth.AuthProvider>(context);
+
+    // Show loading indicator while Firebase auth state is being determined
+    return StreamBuilder<firebase_auth.User?>(
+      stream: firebase_auth.FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final user = authProvider.user;
+        print('AuthProvider user: $user');
+        if (user == null) {
+          print('Navigating to OnboardingScreen');
+          return const OnboardingScreen();
+        }
+        print('Navigating to NavScreen');
+        return const NavScreen();
+      },
+    );
   }
 }
 
@@ -54,7 +66,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Bayanihan App',
+      title: 'Bayanihan',
       theme: ThemeData(
         primaryColor: ThemeConstants.primary,
         scaffoldBackgroundColor: ThemeConstants.lightBg,
@@ -64,7 +76,7 @@ class MyApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: ThemeConstants.primary,
             foregroundColor: ThemeConstants.white,
-            shadowColor: ThemeConstants.buttonHover.withOpacity(0.1), 
+            shadowColor: ThemeConstants.buttonHover.withOpacity(0.1),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
         ),
@@ -84,15 +96,12 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
         '/recovery': (context) => const RecoveryScreen(),
-        '/profile': (context) => const ProfileScreen(), 
-
+        '/profile': (context) => const ProfileScreen(),
         '/org_request': (context) => const OrgRequestPage(),
         '/recommendations': (context) => const RecommendationsPage(),
-        '/map': (context) => const MapPage(), 
-
+        '/map': (context) => const MapPage(),
         '/admin_dashboard': (context) => const AdminDashboardPage(),
         '/admin_map': (context) => const AdminVolunteerMap(),
-
       },
     );
   }
