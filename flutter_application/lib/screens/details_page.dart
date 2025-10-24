@@ -7,7 +7,7 @@ import 'package:latlong2/latlong.dart';
 class DetailsPage extends StatefulWidget {
   final Map<String, dynamic> request;
 
-  const DetailsPage({Key? key, required this.request}) : super(key: key);
+  const DetailsPage({super.key, required this.request});
 
   @override
   State<DetailsPage> createState() => _DetailsPageState();

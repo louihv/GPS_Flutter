@@ -5,7 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:math' show cos, sqrt, asin;
 
 class RecommendationsPage extends StatefulWidget {
-  const RecommendationsPage({Key? key}) : super(key: key);
+  const RecommendationsPage({super.key});
 
   @override
   State<RecommendationsPage> createState() => _RecommendationsPageState();

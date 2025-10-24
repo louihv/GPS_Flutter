@@ -68,7 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     'Information Technology': false,
   };
 
-  List<Map<String, TextEditingController>> _availability = [
+  final List<Map<String, TextEditingController>> _availability = [
     {
       'startDate': TextEditingController(),
       'endDate': TextEditingController(),
@@ -134,14 +134,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Password is required.';
     if (value.length < 8) return 'Password must be at least 8 characters.';
-    if (!RegExp(r'(?=.*[A-Z])').hasMatch(value))
+    if (!RegExp(r'(?=.*[A-Z])').hasMatch(value)) {
       return 'Must contain an uppercase letter.';
-    if (!RegExp(r'(?=.*[a-z])').hasMatch(value))
+    }
+    if (!RegExp(r'(?=.*[a-z])').hasMatch(value)) {
       return 'Must contain a lowercase letter.';
-    if (!RegExp(r'(?=.*\d)').hasMatch(value))
+    }
+    if (!RegExp(r'(?=.*\d)').hasMatch(value)) {
       return 'Must contain a number.';
-    if (!RegExp(r'(?=.*[!@#\$%^&*])').hasMatch(value))
+    }
+    if (!RegExp(r'(?=.*[!@#\$%^&*])').hasMatch(value)) {
       return 'Must contain a special character (!@#\$%^&*).';
+    }
     return null;
   }
 
@@ -164,15 +168,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? _validateEmail(String? v) {
     if (v == null || v.isEmpty) return 'Email is required.';
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v))
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(v)) {
       return 'Please enter a valid email address.';
+    }
     return null;
   }
 
   String? _validateMobileNumber(String? v) {
     if (v == null || v.isEmpty) return 'Mobile number is required.';
-    if (!RegExp(r'^\d{10,11}$').hasMatch(v))
+    if (!RegExp(r'^\d{10,11}$').hasMatch(v)) {
       return 'Enter a valid mobile number (10-11 digits).';
+    }
     return null;
   }
 
@@ -185,8 +191,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String? _validateSocialMediaLink(String? v) {
     if (v == null || v.isEmpty) return null;
-    if (!RegExp(r'^https?://(www\.)?facebook\.com/.+$').hasMatch(v))
+    if (!RegExp(r'^https?://(www\.)?facebook\.com/.+$').hasMatch(v)) {
       return 'Enter a valid Facebook profile URL.';
+    }
     return null;
   }
 

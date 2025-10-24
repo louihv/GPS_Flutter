@@ -5,7 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class AdminVolunteerMap extends StatefulWidget {
-  const AdminVolunteerMap({Key? key}) : super(key: key);
+  const AdminVolunteerMap({super.key});
 
   @override
   State<AdminVolunteerMap> createState() => _AdminVolunteerMapState();

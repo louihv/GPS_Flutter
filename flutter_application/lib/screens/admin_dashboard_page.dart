@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class AdminDashboardPage extends StatefulWidget {
-  const AdminDashboardPage({Key? key}) : super(key: key);
+  const AdminDashboardPage({super.key});
 
   @override
   State<AdminDashboardPage> createState() => _AdminDashboardPageState();
@@ -62,8 +62,11 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
         total += applicants.length;
         for (var applicant in applicants.values) {
           final status = (applicant['status'] ?? '').toString().toLowerCase();
-          if (status == 'approved') approved++;
-          else pending++;
+          if (status == 'approved') {
+            approved++;
+          } else {
+            pending++;
+          }
         }
       }
     }
