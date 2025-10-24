@@ -5,7 +5,7 @@ import 'package:firebase_database/firebase_database.dart';
 
 class AuthProvider extends ChangeNotifier {
   User? _user;
-  Map<String, dynamic>? _userData;   // <-- contains the whole user doc from RTDB
+  Map<String, dynamic>? _userData; 
 
   User? get user => _user;
   Map<String, dynamic>? get userData => _userData;

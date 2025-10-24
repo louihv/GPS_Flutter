@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application/styles/global_styles.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
 import '../constants/theme.dart';
@@ -494,21 +495,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start, // or center / spaceBetween as needed
+                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
-                  children: const [
+                  children: [
                     SizedBox(width: 8),
-                    Text(
-                      'Profile',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: ThemeConstants.primary,
-                      ),
-                    ),
+                    Text( 'Profile', style: GlobalStyles.header),
                   ],
                 )
               ),
+              
 
               // Terms modal overlay
               if (termsModalVisible) ..._buildTermsModal(),
@@ -519,7 +514,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     children: [
-                      const SizedBox(height: 10),
+                      // const SizedBox(height: 10),
                         Text(
                           (_profileData['role'] ?? '').contains('AB ADMIN')
                               ? 'Admin Account'

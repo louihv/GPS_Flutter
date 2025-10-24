@@ -29,7 +29,6 @@ class _NavScreenState extends State<NavScreen> {
     final auth = Provider.of<AuthProvider>(context);
     final bool isAbAdmin = auth.isAbAdmin;
 
-    // 🧭 Define separate nav items for volunteer vs admin
     final List<Widget> volunteerPages = [
       const RecommendationsPage(),
       const MapPage(),
