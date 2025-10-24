@@ -6,6 +6,9 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../constants/theme.dart';
+import '../styles/mappage_styles.dart';
 import 'details_page.dart';
 
 class MapPage extends StatefulWidget {
@@ -24,7 +27,7 @@ class _MapPageState extends State<MapPage> {
 
   List<Map<String, dynamic>> requests = [];
   List<Map<String, dynamic>> filteredRequests = [];
-  LatLng center = const LatLng(14.5995, 120.9842); 
+  LatLng center = const LatLng(14.5995, 120.9842);
   LatLng? userLocation;
   bool followUser = true;
 
@@ -47,17 +50,40 @@ class _MapPageState extends State<MapPage> {
     super.dispose();
   }
 
-  // Fixed: Only one stream, no nesting
   Future<void> _getUserLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    if (!serviceEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please enable location services.', style: MapPageStyles.output),
+          backgroundColor: ThemeConstants.accent,
+        ),
+      );
+      return;
+    }
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Location permission denied.', style: MapPageStyles.output),
+            backgroundColor: ThemeConstants.accent,
+          ),
+        );
+        return;
+      }
     }
-    if (permission == LocationPermission.deniedForever) return;
+    if (permission == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Location permission permanently denied.', style: MapPageStyles.output),
+          backgroundColor: ThemeConstants.accent,
+        ),
+      );
+      return;
+    }
 
     try {
       // Get initial position
@@ -90,6 +116,12 @@ class _MapPageState extends State<MapPage> {
       });
     } catch (e) {
       print('Location error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Location error: $e', style: MapPageStyles.output),
+          backgroundColor: ThemeConstants.accent,
+        ),
+      );
     }
   }
 
@@ -169,12 +201,12 @@ class _MapPageState extends State<MapPage> {
       final lng = req['longitude']?.toDouble();
       if (lat == null || lng == null) return null;
 
-      Color color = Colors.redAccent;
+      Color color = ThemeConstants.primary;
       final dist = req['distance'] as double?;
       if (dist != null && dist <= 5) {
-        color = Colors.green;
+        color = ThemeConstants.accent;
       } else if (dist != null && dist <= 15) {
-        color = Colors.orange;
+        color = ThemeConstants.accentBlue;
       }
 
       return Marker(
@@ -193,65 +225,97 @@ class _MapPageState extends State<MapPage> {
         point: userLocation!,
         width: 40,
         height: 40,
-        child: const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40),
+        child: const Icon(Icons.person_pin_circle, color: ThemeConstants.accentBlue, size: 40),
       ));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Volunteer Map'),
-        backgroundColor: Colors.teal,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search events, skills, or locations',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: _filterRequests,
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomRight,
+            colors: [Color(0x6614AEBB), Color(0xFFFFF9F0)],
           ),
-          Expanded(
-            child: FlutterMap(
-              mapController: _mapController,
-              options: MapOptions(
-                initialCenter: center,
-                initialZoom: 13,
-                maxZoom: 18,
-                minZoom: 3,
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-                  userAgentPackageName: 'com.example.app',
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(MapPageStyles.spacingMedium),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Volunteer Map', style: MapPageStyles.header),
+                    const SizedBox(height: MapPageStyles.spacingXSmall),
+                    Text(
+                      '${filteredRequests.length} Request(s)',
+                      style: MapPageStyles.subtitle,
+                    ),
+                  ],
                 ),
-                MarkerClusterLayerWidget(
-                  options: MarkerClusterLayerOptions(
-                    markers: markers,
-                    maxClusterRadius: 50,
-                    size: const Size(40, 40),
-                    builder: (context, cluster) => Container(
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Colors.teal,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        cluster.length.toString(),
-                    style: const TextStyle(color: Colors.white),
-                      ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: MapPageStyles.spacingSmall, vertical: MapPageStyles.spacingXSmall),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: ThemeConstants.placeholder),
+                    borderRadius: BorderRadius.circular(MapPageStyles.borderRadiusXLarge),
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _filterRequests,
+                    style: MapPageStyles.output,
+                    decoration: InputDecoration(
+                      labelText: 'Search events, skills, or locations...',
+                      labelStyle: MapPageStyles.subtitle,
+                      prefixIcon: const Icon(Icons.search, color: ThemeConstants.primary),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                          vertical: MapPageStyles.spacingMedium, horizontal: MapPageStyles.spacingMedium),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Expanded(
+                child: FlutterMap(
+                  mapController: _mapController,
+                  options: MapOptions(
+                    initialCenter: center,
+                    initialZoom: 13,
+                    maxZoom: 18,
+                    minZoom: 3,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                      userAgentPackageName: 'com.example.app',
+                    ),
+                    MarkerClusterLayerWidget(
+                      options: MarkerClusterLayerOptions(
+                        markers: markers,
+                        maxClusterRadius: 50,
+                        size: const Size(40, 40),
+                        builder: (context, cluster) => Container(
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: ThemeConstants.accentBlue,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            cluster.length.toString(),
+                            style: MapPageStyles.output.copyWith(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -261,8 +325,14 @@ class _MapPageState extends State<MapPage> {
             _mapController.move(userLocation!, 14);
           }
         },
-        backgroundColor: followUser ? Colors.teal : Colors.grey,
-        child: Icon(followUser ? Icons.my_location : Icons.location_disabled),
+        backgroundColor: followUser ? ThemeConstants.accentBlue : ThemeConstants.placeholder,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(MapPageStyles.borderRadiusMedium),
+        ),
+        child: Icon(
+          followUser ? Icons.my_location : Icons.location_disabled,
+          color: Colors.white,
+        ),
       ),
     );
   }

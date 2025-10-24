@@ -1,4 +1,5 @@
-import 'package:firebase_auth/firebase_auth.dart';
+// login.dart
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _auth = FirebaseAuth.instance;
+  final _auth = firebase_auth.FirebaseAuth.instance;
   final _database = FirebaseDatabase.instance.ref();
 
   bool _isLoading = false;
@@ -43,10 +44,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _validatePassword(String? password) {
     if (password == null || password.isEmpty) return 'Password is required.';
-    return null; // No length restriction
+    return null;
   }
 
-  // Check if user exists in Realtime DB (users node)
   Future<Map<String, dynamic>?> _getUserFromDB(String email) async {
     try {
       final snapshot = await _database
@@ -77,7 +77,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    // Validate inputs
     final emailError = _validateEmail(email);
     final passwordError = _validatePassword(password);
 
@@ -96,10 +95,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       if (kIsWeb) {
-        await _auth.setPersistence(Persistence.LOCAL);
+        await _auth.setPersistence(firebase_auth.Persistence.LOCAL);
       }
 
-      // Step 1: Try Firebase Auth login
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
@@ -107,10 +105,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final user = userCredential.user;
       if (user == null) {
-        throw FirebaseAuthException(code: 'unknown', message: 'Login failed');
+        throw firebase_auth.FirebaseAuthException(code: 'unknown', message: 'Login failed');
       }
 
-      // Step 2: Confirm user exists in Realtime DB
       final dbUser = await _getUserFromDB(email);
       if (dbUser == null) {
         await _auth.signOut();
@@ -120,10 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final userData = dbUser['userData'] as Map<String, dynamic>;
 
-      // Optional: Update last login timestamp
       await _database.child('users/${user.uid}/lastLogin').set(DateTime.now().millisecondsSinceEpoch);
 
-      // Success: Set global state and navigate
       Provider.of<myAuth.AuthProvider>(context, listen: false).setUser(user, userData);
 
       Fluttertoast.showToast(msg: 'Login successful!');
@@ -133,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (_) => const NavScreen()),
         );
       }
-    } on FirebaseAuthException catch (e) {
+    } on firebase_auth.FirebaseAuthException catch (e) {
       String msg = 'Login failed.';
       if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
         setState(() => _passwordError = 'Incorrect password');
@@ -165,21 +160,16 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Back Button
                 IconButton(
                   icon: const Icon(Icons.arrow_back, size: 26, color: ThemeConstants.primary),
                   onPressed: _navigateToOnboarding,
                 ),
                 const SizedBox(height: 40),
-
-                // Title
                 const Text(
                   'Login',
                   style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: ThemeConstants.accent),
                 ),
                 const SizedBox(height: 40),
-
-                // Email Field
                 const Text('Email:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ThemeConstants.primary)),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -207,10 +197,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onChanged: (_) => setState(() => _emailError = null),
                   validator: _validateEmail,
                 ),
-
                 const SizedBox(height: 24),
-
-                // Password Field
                 const Text('Password', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ThemeConstants.primary)),
                 const SizedBox(height: 8),
                 TextFormField(
@@ -241,8 +228,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   onChanged: (_) => setState(() => _passwordError = null),
                   validator: _validatePassword,
                 ),
-
-                // Forgot Password
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -250,10 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text('Forgot Password?', style: TextStyle(color: ThemeConstants.accent)),
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
-                // Login Button
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -268,10 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         : const Text('Log in', style: TextStyle(color: Colors.white, fontSize: 18)),
                   ),
                 ),
-
                 const SizedBox(height: 20),
-
-                // Terms Text
                 const Text(
                   'By continuing, you agree to the Terms and Conditions and Privacy Policy.',
                   style: TextStyle(fontSize: 14, color: ThemeConstants.black),

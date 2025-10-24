@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_application/styles/global_styles.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../constants/theme.dart';
+import '../styles/admindashboard_styles.dart';
 
 class AdminDashboardPage extends StatefulWidget {
   const AdminDashboardPage({super.key});
@@ -107,38 +111,37 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AdminDashboardStyles.borderRadiusLarge))),
       builder: (_) => Padding(
-        padding:
-            const EdgeInsets.only(top: 20, left: 20, right: 20, bottom: 40),
+        padding: const EdgeInsets.only(
+            top: AdminDashboardStyles.spacingMedium,
+            left: AdminDashboardStyles.spacingMedium,
+            right: AdminDashboardStyles.spacingMedium,
+            bottom: AdminDashboardStyles.spacingLarge),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'Applicants for "${eventData['eventName']}"',
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                  color: Colors.teal),
+              style: AdminDashboardStyles.header,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AdminDashboardStyles.spacingSmall),
             if (applicants.isEmpty)
-              const Text('No applicants yet.',
-                  style: TextStyle(color: Colors.black54)),
+              Text('No applicants yet.', style: AdminDashboardStyles.subtitle),
             ...applicants.map((entry) {
               final uid = entry.key;
               final applicant = entry.value;
               return Card(
-                margin: const EdgeInsets.symmetric(vertical: 6),
+                margin: const EdgeInsets.symmetric(vertical: AdminDashboardStyles.spacingXSmall),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                    borderRadius: BorderRadius.circular(AdminDashboardStyles.borderRadiusMedium)),
                 child: ListTile(
-                  title: Text(applicant['email'] ?? 'No email'),
+                  title: Text(applicant['email'] ?? 'No email', style: AdminDashboardStyles.output),
                   subtitle: Text(
                       'Status: ${applicant['status'] ?? 'Pending'}',
-                      style: const TextStyle(fontSize: 13)),
+                      style: AdminDashboardStyles.subtitle),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -179,23 +182,15 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFA3B99),
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-      ),
+      padding: const EdgeInsets.all(AdminDashboardStyles.spacingMedium),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Admin Dashboard',
-              style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white)),
-          const SizedBox(height: 6),
+          Text('Admin Dashboard', style: GlobalStyles.header),
+          const SizedBox(height: AdminDashboardStyles.spacingXSmall),
           Text(
             '${events.length} Event(s) | $totalVolunteers Volunteer(s)',
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
+            style: AdminDashboardStyles.subtitle,
           ),
         ],
       ),
@@ -204,12 +199,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   Widget _buildAnalyticsCards() {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AdminDashboardStyles.spacingSmall),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildStatCard('Events', events.length, Icons.event, Colors.indigo),
-          _buildStatCard('Volunteers', totalVolunteers, Icons.people, Colors.teal),
+          _buildStatCard('Events', events.length, Icons.event, ThemeConstants.accent),
+          _buildStatCard('Volunteers', totalVolunteers, Icons.people, ThemeConstants.accentBlue),
           _buildStatCard('Approved', approvedVolunteers, Icons.check, Colors.green),
           _buildStatCard('Pending', pendingVolunteers, Icons.hourglass_empty, Colors.orange),
         ],
@@ -221,24 +216,24 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       String title, int value, IconData icon, Color color) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.symmetric(horizontal: AdminDashboardStyles.spacingXSmall),
+        padding: const EdgeInsets.all(AdminDashboardStyles.spacingSmall),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AdminDashboardStyles.borderRadiusMedium),
         ),
         child: Column(
           children: [
             Icon(icon, color: color, size: 28),
-            const SizedBox(height: 6),
+            const SizedBox(height: AdminDashboardStyles.spacingXSmall),
             Text(
               value.toString(),
-              style: TextStyle(
+              style: AdminDashboardStyles.output.copyWith(
                   color: color, fontWeight: FontWeight.bold, fontSize: 18),
             ),
             Text(
               title,
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
+              style: AdminDashboardStyles.subtitle,
             ),
           ],
         ),
@@ -249,83 +244,88 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(
-        elevation: 0,
-        title: const Text('Admin Dashboard',
-        style: TextStyle(
-        color: Colors.white, 
-        fontSize: 22, 
-      ),
-      ),
-        backgroundColor: const Color(0xFF14AEBB),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: [
-          _buildHeader(),
-          _buildAnalyticsCards(),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              onChanged: _filterEvents,
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: 'Search event...',
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomRight,
+            colors: [Color(0x6614AEBB), Color(0xFFFFF9F0)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(),
+              _buildAnalyticsCards(),
+              Padding(
+                padding: const EdgeInsets.all(AdminDashboardStyles.spacingSmall),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: ThemeConstants.placeholder),
+                    borderRadius: BorderRadius.circular(AdminDashboardStyles.borderRadiusXLarge),
+                  ),
+                  child: TextField(
+                    onChanged: _filterEvents,
+                    style: AdminDashboardStyles.output,
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search, color: ThemeConstants.primary),
+                      hintText: 'Search event...',
+                      hintStyle: AdminDashboardStyles.subtitle,
+                      border: InputBorder.none,
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      isDense: true, 
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 12,
+                        horizontal: AdminDashboardStyles.spacingMedium,
+                      ),
+                    ),
+                  ),
+
                 ),
               ),
-            ),
-          ),
-          Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : filteredEvents.isEmpty
-                    ? const Center(child: Text('No events found.'))
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        itemCount: filteredEvents.length,
-                        itemBuilder: (context, i) {
-                          final event = filteredEvents[i];
-                          return Card(
-                            elevation: 3,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16)),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(16),
-                              title: Text(
-                                event['eventName'] ?? 'Untitled Event',
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: Text(
-                                  event['description'] ??
-                                      'No description available.',
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+              Expanded(
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : filteredEvents.isEmpty
+                        ? Center(child: Text('No events found.', style: AdminDashboardStyles.subtitle))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: AdminDashboardStyles.spacingSmall),
+                            itemCount: filteredEvents.length,
+                            itemBuilder: (context, i) {
+                              final event = filteredEvents[i];
+                              return Card(
+                                elevation: 3,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(AdminDashboardStyles.borderRadiusMedium)),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.all(AdminDashboardStyles.spacingMedium),
+                                  title: Text(
+                                    event['eventName'] ?? 'Untitled Event',
+                                    style: AdminDashboardStyles.output.copyWith(
+                                        fontWeight: FontWeight.w600, fontSize: 16),
+                                  ),
+                                  subtitle: Padding(
+                                    padding: const EdgeInsets.only(top: AdminDashboardStyles.spacingXSmall),
+                                    child: Text(
+                                      event['description'] ?? 'No description available.',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AdminDashboardStyles.subtitle,
+                                    ),
+                                  ),
+                                  trailing: IconButton(
+                                    icon: const Icon(Icons.people, color: ThemeConstants.accent, size: 26),
+                                    onPressed: () => _viewApplicants(event['id'], event),
+                                  ),
                                 ),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.people,
-                                    color: Color(0xFFFA3B99), size: 26),
-                                onPressed: () =>
-                                    _viewApplicants(event['id'], event),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+                              );
+                            },
+                          ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

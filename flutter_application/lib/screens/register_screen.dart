@@ -843,19 +843,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: RegisterStyles.small),
                 Text('Volunteer Registration', style: RegisterStyles.welcomeTextStyle),
                 const SizedBox(height: RegisterStyles.xlarge),
-                Container(
+                Center(
+                child: Container(
                   width: RegisterStyles.formWidth,
                   decoration: RegisterStyles.formContainerDecoration(context),
                   padding: RegisterStyles.contentPadding,
+                  
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // ── Volunteer Information ───────────────────────────────
+                      
                       Text('Volunteer Information',
                           style: RegisterStyles.labelStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w700)),
                       const SizedBox(height: RegisterStyles.inputMarginBottom),
 
-                      // ----- Name fields -----
                       Text('First Name', style: RegisterStyles.nameLabelStyle),
                       const SizedBox(height: RegisterStyles.xsmall),
                       SizedBox(
@@ -914,7 +915,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: RegisterStyles.inputMarginBottom),
 
-                      // ----- Contact -----
                       Text('Email Address', style: RegisterStyles.labelStyle),
                       const SizedBox(height: RegisterStyles.xsmall),
                       SizedBox(
@@ -952,7 +952,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: RegisterStyles.inputMarginBottom),
 
-                      // ----- Age -----
                       Text('Age', style: RegisterStyles.labelStyle),
                       const SizedBox(height: RegisterStyles.xsmall),
                       SizedBox(
@@ -971,7 +970,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                       const SizedBox(height: RegisterStyles.inputMarginBottom),
 
-                      // ----- Social -----
                       Text('Social Media Link (Optional)', style: RegisterStyles.labelStyle),
                       const SizedBox(height: RegisterStyles.xsmall),
                       SizedBox(
@@ -989,10 +987,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
 
-                      // ── NEW: Password fields ────────────────────────
                       _buildPasswordFields(),
 
-                      // ----- Location -----
                       const SizedBox(height: RegisterStyles.inputMarginBottom),
                       Text('Volunteer Location', style: RegisterStyles.labelStyle),
                       const SizedBox(height: RegisterStyles.xsmall),
@@ -1043,7 +1039,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
 
-                      // ── Availability ─────────────────────────────────
                       const SizedBox(height: RegisterStyles.inputMarginBottom),
                       Text('Availability',
                           style: RegisterStyles.labelStyle.copyWith(fontSize: 16, fontWeight: FontWeight.w700)),
@@ -1066,7 +1061,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                       ),
 
-                      // ── Terms ───────────────────────────────────────
                       const SizedBox(height: RegisterStyles.inputMarginBottom),
                       CheckboxListTile(
                         value: _termsAgreed,
@@ -1089,7 +1083,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         Text(_termsError!,
                             style: const TextStyle(color: Colors.red, fontSize: 12)),
 
-                      // ── Register button ───────────────────────────────
                       const SizedBox(height: RegisterStyles.inputMarginBottom),
                       SizedBox(
                         width: double.infinity,
@@ -1114,6 +1107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ],
                   ),
                 ),
+            )
               ],
             ),
           ),
