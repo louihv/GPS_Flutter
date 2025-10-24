@@ -66,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           },
           onWebResourceError: (error) {
             debugPrint('WebView error: ${error.description}');
-            Fluttertoast.showToast(msg: 'Please check your internet connection.');
             if (mounted) {
               setState(() => _isLoading = false);
             }

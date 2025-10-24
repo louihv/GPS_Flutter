@@ -190,7 +190,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: const TextStyle(fontSize: 12),
                   decoration: InputDecoration(
                     hintText: 'Enter Email',
-                    hintStyle: const TextStyle(color: ThemeConstants.placeholder, fontSize: 12),
+                    hintStyle: const TextStyle(color: ThemeConstants.placeholder, fontSize: 13),
                     border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
                     enabledBorder: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(15)),
@@ -220,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: const TextStyle(fontSize: 12),
                   decoration: InputDecoration(
                     hintText: 'Enter Password',
-                    hintStyle: const TextStyle(color: ThemeConstants.placeholder, fontSize: 12),
+                    hintStyle: const TextStyle(color: ThemeConstants.placeholder, fontSize: 13),
                     border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(10))),
                     enabledBorder: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(15)),

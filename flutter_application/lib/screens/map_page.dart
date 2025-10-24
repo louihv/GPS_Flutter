@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -5,7 +6,7 @@ import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:geolocator/geolocator.dart';
-import 'details_page.dart'; // ✅ Import your details page
+import 'details_page.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({Key? key}) : super(key: key);
@@ -23,9 +24,13 @@ class _MapPageState extends State<MapPage> {
 
   List<Map<String, dynamic>> requests = [];
   List<Map<String, dynamic>> filteredRequests = [];
-  LatLng center = const LatLng(14.5995, 120.9842); // Manila default
+  LatLng center = const LatLng(14.5995, 120.9842); 
   LatLng? userLocation;
   bool followUser = true;
+
+  // Stream subscriptions
+  StreamSubscription<DatabaseEvent>? _dbSubscription;
+  StreamSubscription<Position>? _locationSubscription;
 
   @override
   void initState() {
@@ -34,6 +39,15 @@ class _MapPageState extends State<MapPage> {
     _getUserLocation();
   }
 
+  @override
+  void dispose() {
+    _dbSubscription?.cancel();
+    _locationSubscription?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  // Fixed: Only one stream, no nesting
   Future<void> _getUserLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) return;
@@ -45,55 +59,77 @@ class _MapPageState extends State<MapPage> {
     }
     if (permission == LocationPermission.deniedForever) return;
 
-    Position pos = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+    try {
+      // Get initial position
+      Position pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
 
-    setState(() {
-      userLocation = LatLng(pos.latitude, pos.longitude);
-      if (followUser) center = userLocation!;
-    });
-
-    Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-    ).listen((pos) {
+      if (!mounted) return;
       setState(() {
         userLocation = LatLng(pos.latitude, pos.longitude);
-        if (followUser) _mapController.move(userLocation!, 14);
+        if (followUser) {
+          center = userLocation!;
+          _mapController.move(center, 14);
+        }
+      });
+
+      // Cancel any previous stream
+      await _locationSubscription?.cancel();
+
+      // Start live location updates
+      _locationSubscription = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      ).listen((pos) {
+        if (!mounted) return;
+        setState(() {
+          userLocation = LatLng(pos.latitude, pos.longitude);
+          if (followUser) {
+            _mapController.move(userLocation!, 14);
+          }
+        });
+      });
+    } catch (e) {
+      print('Location error: $e');
+    }
+  }
+
+  void _fetchRequests() {
+    _dbSubscription?.cancel();
+
+    _dbSubscription = _dbRef.onValue.listen((event) {
+      if (!mounted) return;
+
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return;
+
+      final fetched = data.entries.map((entry) {
+        final req = Map<String, dynamic>.from(entry.value);
+        req['id'] = entry.key;
+
+        if (userLocation != null &&
+            req['latitude'] != null &&
+            req['longitude'] != null) {
+          req['distance'] = _calculateDistance(
+            userLocation!.latitude,
+            userLocation!.longitude,
+            req['latitude'].toDouble(),
+            req['longitude'].toDouble(),
+          );
+        } else {
+          req['distance'] = double.infinity;
+        }
+        return req;
+      }).toList();
+
+      if (!mounted) return;
+      setState(() {
+        requests = fetched;
+        filteredRequests = fetched;
       });
     });
   }
 
-  void _fetchRequests() {
-    _dbRef.onValue.listen((event) {
-      final data = event.snapshot.value as Map<dynamic, dynamic>?;
-      if (data != null) {
-        final fetched = data.entries.map((entry) {
-          final req = Map<String, dynamic>.from(entry.value);
-          req['id'] = entry.key;
-          if (userLocation != null &&
-              req.containsKey('latitude') &&
-              req.containsKey('longitude')) {
-            req['distance'] = _calculateDistance(
-              userLocation!.latitude,
-              userLocation!.longitude,
-              req['latitude'],
-              req['longitude'],
-            );
-          } else {
-            req['distance'] = double.infinity;
-          }
-          return req;
-        }).toList();
-
-        setState(() {
-          requests = fetched;
-          filteredRequests = fetched;
-        });
-      }
-    });
-  }
-
-  double _calculateDistance(lat1, lon1, lat2, lon2) {
+  double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
     const p = 0.017453292519943295;
     final a = 0.5 -
         cos((lat2 - lat1) * p) / 2 +
@@ -103,6 +139,7 @@ class _MapPageState extends State<MapPage> {
 
   void _filterRequests(String query) {
     final lowerQuery = query.toLowerCase();
+    if (!mounted) return;
     setState(() {
       filteredRequests = requests.where((req) {
         final title = (req['eventName'] ?? '').toString().toLowerCase();
@@ -116,10 +153,11 @@ class _MapPageState extends State<MapPage> {
   }
 
   void _openDetails(Map<String, dynamic> req) {
+    if (!mounted) return;
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DetailsPage(request: req), // ✅ your details view
+        builder: (context) => DetailsPage(request: req),
       ),
     );
   }
@@ -132,9 +170,10 @@ class _MapPageState extends State<MapPage> {
       if (lat == null || lng == null) return null;
 
       Color color = Colors.redAccent;
-      if (req['distance'] != null && req['distance'] <= 5) {
+      final dist = req['distance'] as double?;
+      if (dist != null && dist <= 5) {
         color = Colors.green;
-      } else if (req['distance'] != null && req['distance'] <= 15) {
+      } else if (dist != null && dist <= 15) {
         color = Colors.orange;
       }
 
@@ -204,7 +243,7 @@ class _MapPageState extends State<MapPage> {
                       ),
                       child: Text(
                         cluster.length.toString(),
-                        style: const TextStyle(color: Colors.white),
+                    style: const TextStyle(color: Colors.white),
                       ),
                     ),
                   ),
@@ -216,6 +255,7 @@ class _MapPageState extends State<MapPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
+          if (!mounted) return;
           setState(() => followUser = !followUser);
           if (followUser && userLocation != null) {
             _mapController.move(userLocation!, 14);
