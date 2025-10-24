@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:math' show cos, sqrt, asin;
+import '../constants/theme.dart';
+import '../styles/recommendations_styles.dart';
 
 class RecommendationsPage extends StatefulWidget {
   const RecommendationsPage({Key? key}) : super(key: key);
@@ -33,7 +36,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enable location services.')),
+          SnackBar(
+            content: Text('Please enable location services.', style: RecommendationsStyles.output),
+            backgroundColor: ThemeConstants.accent,
+          ),
         );
         return;
       }
@@ -46,7 +52,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
       if (permission == LocationPermission.deniedForever ||
           permission == LocationPermission.denied) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Location permission denied.')),
+          SnackBar(
+            content: Text('Location permission denied.', style: RecommendationsStyles.output),
+            backgroundColor: ThemeConstants.accent,
+          ),
         );
         return;
       }
@@ -58,6 +67,12 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
       _fetchRequests();
     } catch (e) {
       print("Error getting location: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error getting location: $e', style: RecommendationsStyles.output),
+          backgroundColor: ThemeConstants.accent,
+        ),
+      );
     }
   }
 
@@ -100,6 +115,8 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
         // Check if user has already joined any request
         _checkJoinedRequests();
+      } else {
+        setState(() => _isLoading = false);
       }
     });
   }
@@ -150,7 +167,10 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must be logged in to join.')),
+        SnackBar(
+          content: Text('You must be logged in to join.', style: RecommendationsStyles.output),
+          backgroundColor: ThemeConstants.accent,
+        ),
       );
       return;
     }
@@ -158,16 +178,28 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Confirm Join"),
-        content: Text("Do you want to join '${req['eventName']}'?"),
+        title: Row(
+          children: [
+            const Icon(Icons.volunteer_activism, color: ThemeConstants.primary),
+            const SizedBox(width: RecommendationsStyles.spacingXSmall),
+            Text("Confirm Join", style: RecommendationsStyles.header),
+          ],
+        ),
+        content: Text("Do you want to join '${req['eventName']}'?", style: RecommendationsStyles.output),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Cancel"),
+            child: Text("Cancel", style: RecommendationsStyles.output),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text("Join"),
+            child: Text("Join", style: RecommendationsStyles.output),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ThemeConstants.accentBlue,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusMedium),
+              ),
+            ),
           ),
         ],
       ),
@@ -193,14 +225,17 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("You've joined '${req['eventName']}' successfully!"),
-          backgroundColor: Colors.green.shade600,
+          content: Text("You've joined '${req['eventName']}' successfully!", style: RecommendationsStyles.output),
+          backgroundColor: Colors.green,
         ),
       );
     } catch (e) {
       setState(() => req['_joining'] = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error joining request: $e')),
+        SnackBar(
+          content: Text('Error joining request: $e', style: RecommendationsStyles.output),
+          backgroundColor: ThemeConstants.accent,
+        ),
       );
     }
   }
@@ -209,12 +244,12 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(RecommendationsStyles.borderRadiusLarge)),
       ),
       builder: (_) {
         return Padding(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(RecommendationsStyles.spacingMedium),
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,75 +258,75 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                   child: Container(
                     width: 50,
                     height: 5,
-                    margin: const EdgeInsets.only(bottom: 12),
+                    margin: const EdgeInsets.only(bottom: RecommendationsStyles.spacingSmall),
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
+                      color: ThemeConstants.placeholder,
+                      borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusSmall),
                     ),
                   ),
                 ),
                 Text(req['eventName'] ?? 'No Title',
-                    style: const TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                    style: RecommendationsStyles.output.copyWith(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: RecommendationsStyles.spacingXSmall),
                 Text(req['description'] ?? 'No description provided.',
-                    style: const TextStyle(color: Colors.grey)),
-                const SizedBox(height: 12),
+                    style: RecommendationsStyles.subtitle),
+                const SizedBox(height: RecommendationsStyles.spacingMedium),
                 const Divider(),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, color: Colors.redAccent),
-                    const SizedBox(width: 6),
+                    const Icon(Icons.location_on, color: ThemeConstants.accent),
+                    const SizedBox(width: RecommendationsStyles.spacingXSmall),
                     Expanded(
-                      child: Text(req['address'] ?? 'No address provided'),
+                      child: Text(req['address'] ?? 'No address provided', style: RecommendationsStyles.output),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: RecommendationsStyles.spacingXSmall),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today, color: Colors.teal),
-                    const SizedBox(width: 6),
-                    Text("Date: ${req['date'] ?? 'N/A'}"),
-                    const SizedBox(width: 16),
-                    const Icon(Icons.access_time, color: Colors.teal),
-                    const SizedBox(width: 6),
-                    Text("Time: ${req['time'] ?? 'N/A'}"),
+                    const Icon(Icons.calendar_today, color: ThemeConstants.accentBlue),
+                    const SizedBox(width: RecommendationsStyles.spacingXSmall),
+                    Text("Date: ${req['date'] ?? 'N/A'}", style: RecommendationsStyles.output),
+                    const SizedBox(width: RecommendationsStyles.spacingMedium),
+                    const Icon(Icons.access_time, color: ThemeConstants.accentBlue),
+                    const SizedBox(width: RecommendationsStyles.spacingXSmall),
+                    Text("Time: ${req['time'] ?? 'N/A'}", style: RecommendationsStyles.output),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: RecommendationsStyles.spacingXSmall),
                 Row(
                   children: [
-                    const Icon(Icons.group, color: Colors.blueAccent),
-                    const SizedBox(width: 6),
-                    Text("Volunteers needed: ${req['numberNeeded'] ?? 'N/A'}"),
+                    const Icon(Icons.group, color: ThemeConstants.accentBlue),
+                    const SizedBox(width: RecommendationsStyles.spacingXSmall),
+                    Text("Volunteers needed: ${req['numberNeeded'] ?? 'N/A'}", style: RecommendationsStyles.output),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: RecommendationsStyles.spacingXSmall),
                 if (req['distance'] != null && req['distance'] != double.infinity)
                   Text(
                     "📍 Distance: ${req['distance'].toStringAsFixed(2)} km away",
-                    style: const TextStyle(color: Colors.teal),
+                    style: RecommendationsStyles.output.copyWith(color: ThemeConstants.accentBlue),
                   ),
-                const SizedBox(height: 12),
+                const SizedBox(height: RecommendationsStyles.spacingMedium),
                 Text(
                   "Skills Required:",
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                  style: RecommendationsStyles.output.copyWith(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: RecommendationsStyles.spacingXSmall),
                 Wrap(
-                  spacing: 8,
+                  spacing: RecommendationsStyles.spacingXSmall,
                   children: (req['skillsRequired'] as List?)
                           ?.map((s) => Chip(
-                                label: Text(s.toString().trim(),
-                                    style: const TextStyle(color: Colors.white)),
-                                backgroundColor: Colors.teal,
+                                label: Text(s.toString().trim(), style: RecommendationsStyles.output),
+                                backgroundColor: ThemeConstants.accentBlue.withOpacity(0.2),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusMedium),
+                                ),
                               ))
                           .toList() ??
-                      [const Text('None listed')],
+                      [Text('None listed', style: RecommendationsStyles.subtitle)],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: RecommendationsStyles.spacingLarge),
                 Center(
                   child: ElevatedButton.icon(
                     onPressed: req['_hasJoined'] || req['_joining']
@@ -307,17 +342,20 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                             child: CircularProgressIndicator(
                                 strokeWidth: 2, color: Colors.white),
                           )
-                        : const Icon(Icons.volunteer_activism),
-                    label: Text(req['_hasJoined']
-                        ? "Joined"
-                        : req['_joining']
-                            ? "Joining..."
-                            : "Join"),
+                        : const Icon(Icons.volunteer_activism, color: Colors.white),
+                    label: Text(
+                      req['_hasJoined']
+                          ? "Joined"
+                          : req['_joining']
+                              ? "Joining..."
+                              : "Join",
+                      style: RecommendationsStyles.output.copyWith(color: Colors.white),
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
+                      backgroundColor: ThemeConstants.accentBlue,
                       minimumSize: const Size(double.infinity, 48),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                          borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusMedium)),
                     ),
                   ),
                 ),
@@ -331,14 +369,16 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
 
   Widget _buildRequestCard(Map<String, dynamic> req) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      margin: const EdgeInsets.symmetric(
+          horizontal: RecommendationsStyles.spacingSmall, vertical: RecommendationsStyles.spacingXSmall),
       elevation: 5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusLarge)),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusLarge),
         onTap: () => _showRequestDetails(req),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(RecommendationsStyles.spacingMedium),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -347,45 +387,49 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                 children: [
                   Expanded(
                     child: Text(req['eventName'] ?? 'Unnamed Event',
-                        style: const TextStyle(
+                        style: RecommendationsStyles.output.copyWith(
                             fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                   if (req['distance'] != null && req['distance'] != double.infinity)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: RecommendationsStyles.spacingXSmall,
+                          vertical: RecommendationsStyles.spacingXSmall),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(12),
+                        color: ThemeConstants.accentBlue.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusMedium),
                       ),
                       child: Text(
                         "${req['distance'].toStringAsFixed(1)} km",
-                        style: const TextStyle(
-                            color: Colors.teal, fontWeight: FontWeight.bold),
+                        style: RecommendationsStyles.output.copyWith(
+                            color: ThemeConstants.accentBlue, fontWeight: FontWeight.bold),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: RecommendationsStyles.spacingXSmall),
               Text(req['description'] ?? 'No description',
-                  maxLines: 2, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 8),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: RecommendationsStyles.subtitle),
+              const SizedBox(height: RecommendationsStyles.spacingXSmall),
               Wrap(
-                spacing: 6,
-                runSpacing: 4,
+                spacing: RecommendationsStyles.spacingXSmall,
+                runSpacing: RecommendationsStyles.spacingXSmall,
                 children: (req['skillsRequired'] as List?)
                         ?.map((s) => Chip(
-                              label: Text(
-                                s.toString(),
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 12),
+                              label: Text(s.toString(),
+                                  style: RecommendationsStyles.output.copyWith(color: Colors.white)),
+                              backgroundColor: ThemeConstants.accentBlue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusMedium),
                               ),
-                              backgroundColor: Colors.teal,
                               visualDensity: VisualDensity.compact,
                             ))
                         .toList() ??
-                    [const Text('No skills listed')],
+                    [Text('No skills listed', style: RecommendationsStyles.subtitle)],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: RecommendationsStyles.spacingMedium),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -399,17 +443,20 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
                           child: CircularProgressIndicator(
                               strokeWidth: 2, color: Colors.white),
                         )
-                      : const Icon(Icons.volunteer_activism),
-                  label: Text(req['_hasJoined']
-                      ? "Joined"
-                      : req['_joining']
-                          ? "Joining..."
-                          : "Join"),
+                      : const Icon(Icons.volunteer_activism, color: Colors.white),
+                  label: Text(
+                    req['_hasJoined']
+                        ? "Joined"
+                        : req['_joining']
+                            ? "Joining..."
+                            : "Join",
+                    style: RecommendationsStyles.output.copyWith(color: Colors.white),
+                  ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
+                    backgroundColor: ThemeConstants.accentBlue,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                        borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusMedium)),
+                    padding: const EdgeInsets.symmetric(vertical: RecommendationsStyles.spacingMedium),
                   ),
                 ),
               ),
@@ -423,57 +470,75 @@ class _RecommendationsPageState extends State<RecommendationsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F5F7),
-      appBar: AppBar(
-        title: const Text('Volunteer Recommendations'),
-        backgroundColor: Colors.teal,
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      onChanged: _filterRequests,
-                      decoration: InputDecoration(
-                        hintText: "Search by event, skill, or location...",
-                        prefixIcon: const Icon(Icons.search),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                            vertical: 14, horizontal: 16),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topRight,
+            end: Alignment.bottomRight,
+            colors: [Color(0x6614AEBB), Color(0xFFFFF9F0)],
+          ),
+        ),
+        child: SafeArea(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(RecommendationsStyles.spacingMedium),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Volunteer Recommendations', style: RecommendationsStyles.header),
+                          const SizedBox(height: RecommendationsStyles.spacingXSmall),
+                          Text(
+                            '${filteredRequests.length} Request(s)',
+                            style: RecommendationsStyles.subtitle,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ),
-                Expanded(
-                  child: filteredRequests.isEmpty
-                      ? const Center(child: Text("No nearby requests found."))
-                      : ListView.builder(
-                          itemCount: filteredRequests.length,
-                          itemBuilder: (context, index) {
-                            final req = filteredRequests[index];
-                            return _buildRequestCard(req);
-                          },
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: RecommendationsStyles.spacingSmall,
+                          vertical: RecommendationsStyles.spacingXSmall),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: ThemeConstants.placeholder),
+                          borderRadius: BorderRadius.circular(RecommendationsStyles.borderRadiusXLarge),
                         ),
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: _filterRequests,
+                          style: RecommendationsStyles.output,
+                          decoration: InputDecoration(
+                            labelText: 'Search by event, skill, or location...',
+                            labelStyle: RecommendationsStyles.subtitle,
+                            prefixIcon: const Icon(Icons.search, color: ThemeConstants.primary),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                                vertical: RecommendationsStyles.spacingMedium,
+                                horizontal: RecommendationsStyles.spacingMedium),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: filteredRequests.isEmpty
+                          ? Center(
+                              child: Text('No nearby requests found.', style: RecommendationsStyles.subtitle),
+                            )
+                          : ListView.builder(
+                              itemCount: filteredRequests.length,
+                              itemBuilder: (context, index) {
+                                final req = filteredRequests[index];
+                                return _buildRequestCard(req);
+                              },
+                            ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+        ),
+      ),
     );
   }
 }
